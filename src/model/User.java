@@ -24,7 +24,7 @@ public abstract class User {
     }
 
     // ── Méthodes abstraites ────────────────────
-    // Chaque sous-classe (Client, Admin) DOIT les implémenter
+    // Chaque sous-classe (Client, Admin) doit les implémenter
     public abstract boolean login(String email, String password);
     public abstract void logout();
 
