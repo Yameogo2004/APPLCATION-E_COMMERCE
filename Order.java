@@ -1,61 +1,81 @@
 package e_commerce;
 
-import java.util.UUID;
-import java.util.List;
+import java.sql.*;
 import java.util.ArrayList;
-import java.time.LocalDateTime;
+import java.util.List;
+import database.DatabaseConnection;
 
-public class Order {
+public class OrderDAO {
 
-    private int id;
-    private String orderUUID;
-    private double totalPrice;
-    private String status;
-    private LocalDateTime createdAt;
-    private List<OrderItem> items = new ArrayList<>();
-    private Payment payment;
+    private Connection conn;
 
-    public Order(int id) {
-        this.id = id;
-        this.orderUUID = UUID.randomUUID().toString();
-        this.status = "pending";
-        this.createdAt = LocalDateTime.now();
-        this.totalPrice = 0;
+    public OrderDAO() throws SQLException {
+        this.conn = DatabaseConnection.getConnection();
     }
 
-    public int getId() { return id; }
-    public String getOrderUUID() { return orderUUID; }
-    public double getTotalPrice() { return totalPrice; }
-    public String getStatus() { return status; }
-    public List<OrderItem> getItems() { return items; }
+    // ── Enregistrer une commande ─────────────────────────────
+    public void save(Order order, int clientId) throws SQLException {
+        String sql = "INSERT INTO orders (order_uuid, client_id, total_price, status, created_at) VALUES (?, ?, ?, ?, ?)";
 
-    public void ajouterItem(OrderItem item) {
-        items.add(item);
-        calculTotal();
-    }
+        try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            ps.setString(1, order.getOrderUUID());
+            ps.setInt(2, clientId);
+            ps.setDouble(3, order.getTotalPrice());
+            ps.setString(4, order.getStatus());
+            ps.setTimestamp(5, Timestamp.valueOf(order.getCreatedAt()));
 
-    public double calculTotal() {
-        double total = 0;
-        for (OrderItem item : items) {
-            total += item.calculSubtotal();
+            ps.executeUpdate();
+
+            ResultSet rs = ps.getGeneratedKeys();
+            if (rs.next()) {
+                order.setId(rs.getInt(1)); 
+            }
         }
-        this.totalPrice = total;
-        return total;
+
+        // Sauvegarder les items
+        if (!order.getItems().isEmpty()) {
+            OrderItemDAO itemDAO = new OrderItemDAO();
+            for (OrderItem item : order.getItems()) {
+                itemDAO.save(item, order.getId());
+            }
+        }
     }
 
-    public void validerCommande() {
-        status = "validated";
-        System.out.println("Commande validée.");
+    // ── Récupérer les commandes d’un client ─────────────────
+    public List<Order> findByClient(int clientId) throws SQLException {
+        List<Order> orders = new ArrayList<>();
+        String sql = "SELECT * FROM orders WHERE client_id = ?";
+
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, clientId);
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                Order order = new Order(rs.getInt("id"));
+
+                order.setOrderUUID(rs.getString("order_uuid"));
+                order.setTotalPrice(rs.getDouble("total_price"));
+                order.setStatus(rs.getString("status"));
+                order.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
+
+                // Charger les items
+                OrderItemDAO itemDAO = new OrderItemDAO();
+                order.getItems().addAll(itemDAO.findByOrder(order.getId()));
+
+                orders.add(order);
+            }
+        }
+        return orders;
     }
 
-    public void payerCommande(Payment payment) {
-        this.payment = payment;
-        status = "paid";
-        payment.effectuerPaiement();
-    }
+    // ── Mettre à jour le statut ─────────────────────────────
+    public void updateStatus(int orderId, String newStatus) throws SQLException {
+        String sql = "UPDATE orders SET status = ? WHERE id = ?";
 
-    public void cancelOrder() {
-        status = "cancelled";
-        System.out.println("Commande annulée.");
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, newStatus);
+            ps.setInt(2, orderId);
+            ps.executeUpdate();
+        }
     }
 }
