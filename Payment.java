@@ -1,0 +1,100 @@
+package model;
+
+public class Payment {
+    private int id;
+    private int orderId;
+    private String method;
+    private double amount;
+    private String status;
+    private String paidAt;
+
+    public Payment() {
+    }
+
+    public Payment(int id, int orderId, String method, double amount, String status, String paidAt) {
+        this.id = id;
+        this.orderId = orderId;
+        setMethod(method);
+        setAmount(amount);
+        setStatus(status);
+        this.paidAt = paidAt;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+
+    public int getOrderId() {
+        return orderId;
+    }
+
+    public void setOrderId(int orderId) {
+        this.orderId = orderId;
+    }
+
+
+    public String getMethod() {
+        return method;
+    }
+
+    public void setMethod(String method) {
+        if (!method.equalsIgnoreCase("card") && !method.equalsIgnoreCase("especes")) {
+            throw new IllegalArgumentException("Méthode invalide.");
+        }
+        this.method = method.toLowerCase();
+    }
+
+
+    public double getAmount() {
+        return amount;
+    }
+
+    public void setAmount(double amount) {
+        if (amount < 0) {
+            throw new IllegalArgumentException("Montant invalide.");
+        }
+        this.amount = amount;
+    }
+
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        if (!status.equalsIgnoreCase("pending")
+                && !status.equalsIgnoreCase("success")
+                && !status.equalsIgnoreCase("failed")) {
+            throw new IllegalArgumentException("Statut invalide.");
+        }
+        this.status = status.toLowerCase();
+    }
+
+
+    public String getPaidAt() {
+        return paidAt;
+    }
+
+    public void setPaidAt(String paidAt) {
+        this.paidAt = paidAt;
+    }
+
+    public boolean validatePayment() {
+        return amount > 0 &&
+                (method.equals("card") || method.equals("especes"));
+    }
+
+    public boolean processPayment() {
+        if (!validatePayment()) {
+            status = "failed";
+            return false;
+        }
+        status = "success";
+        return true;
+    }
+}
