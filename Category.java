@@ -70,5 +70,10 @@ public class Category {
     public void supprimerCategory() {
         System.out.println("Category supprimée : " + name);
     }
+    
+    @Override
+    public String toString() {
+        return "Category{id=" + id + ", name='" + name + "', description='" + description + "'}";
+    }
 
 }
