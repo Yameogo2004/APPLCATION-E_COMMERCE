@@ -5,5 +5,5 @@
  * 
  */
 module ChriOnline {
-	requires java.sql;
+    requires java.sql;
 }
