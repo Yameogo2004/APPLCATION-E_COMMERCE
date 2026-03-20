@@ -3,49 +3,41 @@ package e_commerce;
 public class OrderItem {
 
     private int id;
-    private Order order;
-    private Product product;
+    private int orderId;
+    private int productId;
     private int quantity;
-    private double unitPrice;
+    private double price;
 
-    public OrderItem(int id, Order order, Product product, int quantity, double unitPrice) {
-        this.id = id;
-        this.order = order;
-        this.product = product;
+    // 🔹 constructeur vide (OBLIGATOIRE)
+    public OrderItem() {
+    }
+
+    // 🔹 constructeur complet (optionnel)
+    public OrderItem(int orderId, int productId, int quantity, double price) {
+        this.orderId = orderId;
+        this.productId = productId;
         this.quantity = quantity;
-        this.unitPrice = unitPrice;
+        this.price = price;
     }
 
-    public int getId() {
-        return id;
-    }
+    // ===== getters & setters =====
+    public int getId() { return id; }
+    public void setId(int id) { this.id = id; }
 
-    public Order getOrder() {
-        return order;
-    }
+    public int getOrderId() { return orderId; }
+    public void setOrderId(int orderId) { this.orderId = orderId; }
 
-    public Product getProduct() {
-        return product;
-    }
+    public int getProductId() { return productId; }
+    public void setProductId(int productId) { this.productId = productId; }
 
-    public int getQuantity() {
-        return quantity;
-    }
+    public int getQuantity() { return quantity; }
+    public void setQuantity(int quantity) { this.quantity = quantity; }
 
-    public double getUnitPrice() {
-        return unitPrice;
-    }
+    public double getPrice() { return price; }
+    public void setPrice(double price) { this.price = price; }
 
-    public void setQuantity(int quantity) {
-        this.quantity = quantity;
-    }
-    
-
-    public void setUnitPrice(double unitPrice) {
-        this.unitPrice = unitPrice;
-    }
-
+    // 🔹 calcul du sous-total
     public double calculSubtotal() {
-        return quantity * unitPrice;
+        return quantity * price;
     }
 }
