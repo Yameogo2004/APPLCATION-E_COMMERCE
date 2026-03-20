@@ -1,17 +1,19 @@
 package model;
 
+import java.time.LocalDateTime;
+
 public class Payment {
     private int id;
     private int orderId;
     private String method;
     private double amount;
     private String status;
-    private String paidAt;
+    private LocalDateTime paidAt;
 
     public Payment() {
     }
 
-    public Payment(int id, int orderId, String method, double amount, String status, String paidAt) {
+    public Payment(int id, int orderId, String method, double amount, String status, LocalDateTime paidAt) {
         this.id = id;
         this.orderId = orderId;
         setMethod(method);
@@ -28,7 +30,6 @@ public class Payment {
         this.id = id;
     }
 
-
     public int getOrderId() {
         return orderId;
     }
@@ -36,7 +37,6 @@ public class Payment {
     public void setOrderId(int orderId) {
         this.orderId = orderId;
     }
-
 
     public String getMethod() {
         return method;
@@ -49,7 +49,6 @@ public class Payment {
         this.method = method.toLowerCase();
     }
 
-
     public double getAmount() {
         return amount;
     }
@@ -60,7 +59,6 @@ public class Payment {
         }
         this.amount = amount;
     }
-
 
     public String getStatus() {
         return status;
@@ -75,12 +73,11 @@ public class Payment {
         this.status = status.toLowerCase();
     }
 
-
-    public String getPaidAt() {
+    public LocalDateTime getPaidAt() {
         return paidAt;
     }
 
-    public void setPaidAt(String paidAt) {
+    public void setPaidAt(LocalDateTime paidAt) {
         this.paidAt = paidAt;
     }
 
@@ -95,6 +92,7 @@ public class Payment {
             return false;
         }
         status = "success";
+        paidAt = LocalDateTime.now();
         return true;
     }
 }
