@@ -12,6 +12,9 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 
+import service.AuthService;
+import model.User;
+
 public class ClientHandler extends Thread {
 
     private Socket socket;
@@ -80,8 +83,11 @@ public class ClientHandler extends Thread {
         }
 
         // ===== Parties des autres membres =====
-        if (request.startsWith("LOGIN:") || request.startsWith("REGISTER:")) {
-            return "NOT_IMPLEMENTED_AUTH";
+        if (request.startsWith("LOGIN:")) {
+            return handleLogin(request);
+        }
+        if (request.startsWith("REGISTER:")) {
+            return handleRegister(request);
         }
 
         if (request.equalsIgnoreCase("GET_PRODUCTS") || request.startsWith("GET_PRODUCT:")) {
@@ -239,4 +245,62 @@ public class ClientHandler extends Thread {
             System.out.println("Erreur fermeture ressources : " + e.getMessage());
         }
     }
+ // =========================================================
+ // HANDLER LOGIN:email:password
+ // =========================================================
+ private String handleLogin(String request) {
+     try {
+         String[] parts = request.split(":");
+         if (parts.length != 3) {
+             return "ERROR:LOGIN_FORMAT";
+         }
+
+         String email    = parts[1];
+         String password = parts[2];
+
+         AuthService authService = new AuthService();
+         User user = authService.login(email, password);
+
+         if (user != null) {
+             return "LOGIN_SUCCESS:" + user.getId() + ":" + user.getRole();
+         } else {
+             return "ERROR:LOGIN_FAILED";
+         }
+
+     } catch (Exception e) {
+         return "ERROR:LOGIN_EXCEPTION";
+     }
+ }
+
+ // =========================================================
+ // HANDLER REGISTER:nom:prenom:email:password:address:phone:ville
+ // =========================================================
+ private String handleRegister(String request) {
+     try {
+         String[] parts = request.split(":");
+         if (parts.length != 9) {
+             return "ERROR:REGISTER_FORMAT";
+         }
+
+         String nom      = parts[1];
+         String prenom   = parts[2];
+         String email    = parts[3];
+         String password = parts[4];
+         String address  = parts[5];
+         String phone    = parts[6];
+         String ville    = parts[7];
+
+         AuthService authService = new AuthService();
+         boolean success = authService.register(nom, prenom, email,
+                                                password, address, phone, ville);
+         if (success) {
+             return "REGISTER_SUCCESS";
+         } else {
+             return "ERROR:REGISTER_FAILED";
+         }
+
+     } catch (Exception e) {
+         return "ERROR:REGISTER_EXCEPTION";
+     }
+ }
 }
