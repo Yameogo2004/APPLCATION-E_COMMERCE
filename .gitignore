@@ -1,0 +1,9 @@
+# Eclipse
+.classpath
+.project
+.settings/
+bin/
+
+# Système
+.DS_Store
+Thumbs.db
