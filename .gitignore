@@ -1,9 +1,5 @@
-# Eclipse
-.classpath
-.project
-.settings/
 bin/
-
-# Système
+*.class
+*.log
+.vscode
 .DS_Store
-Thumbs.db
