@@ -9,13 +9,13 @@ import model.CartItem;
 import model.Product;
 import model.Order;
 import model.Payment;
+import model.User;
 
-import service.OrderService;
 import service.CartService;
 import service.ProductService;
+import service.OrderService;
 import service.PaymentService;
-
-
+import service.AuthService;
 
 public class ClientHandler implements Runnable {
 
@@ -27,20 +27,21 @@ public class ClientHandler implements Runnable {
     private ProductService productService;
     private OrderService orderService;
     private PaymentService paymentService;
+    private AuthService authService;
 
     public ClientHandler(Socket socket) {
         this.clientSocket = socket;
         this.cartService = new CartService();
         this.productService = new ProductService();
         this.paymentService = new PaymentService();
+        this.authService = new AuthService();
 
-        // ⚠️ Option 1 : gérer l'exception SQLException
         try {
             this.orderService = new OrderService();
-        } catch (Exception e) {  // SQLException ou autres exceptions liées
+        } catch (Exception e) {
             e.printStackTrace();
             System.out.println("Impossible d'initialiser OrderService");
-            this.orderService = null; // pour éviter NullPointerException plus tard
+            this.orderService = null;
         }
 
         try {
@@ -95,14 +96,13 @@ public class ClientHandler implements Runnable {
             if (request.startsWith("PAYMENT:")) { out.println(handlePayment(request)); return; }
 
             // ===== AUTHENTIFICATION =====
-            if (request.startsWith("LOGIN:") || request.startsWith("REGISTER:")) {
-                out.println("NOT_IMPLEMENTED_AUTH"); return;
-            }
+            if (request.startsWith("LOGIN:")) { out.println(handleLogin(request)); return; }
+            if (request.startsWith("REGISTER:")) { out.println(handleRegister(request)); return; }
 
             out.println("ERROR:UNKNOWN_COMMAND");
 
         } catch (Exception e) {
-            out.println("ERROR:EXCEPTION_OCCURED");
+            out.println("ERROR:EXCEPTION_OCCURRED");
             e.printStackTrace();
         }
     }
@@ -162,7 +162,6 @@ public class ClientHandler implements Runnable {
 
             int clientId = Integer.parseInt(parts[1]);
             Cart cart = cartService.getCartByClient(clientId);
-
             if (cart == null || cart.getItems() == null || cart.getItems().isEmpty()) return "CART_EMPTY";
 
             StringBuilder response = new StringBuilder();
@@ -257,7 +256,7 @@ public class ClientHandler implements Runnable {
             if (parts.length != 3) return "ERROR:PAYMENT_FORMAT";
 
             String orderUUID = parts[1];
-            String method = parts[2]; // "card" ou "especes"
+            String method = parts[2];
 
             Order order = orderService.getOrderByUUID(orderUUID);
             if (order == null) return "ERROR:ORDER_NOT_FOUND";
@@ -280,6 +279,45 @@ public class ClientHandler implements Runnable {
         } catch (Exception e) {
             e.printStackTrace();
             return "ERROR:PAYMENT_EXCEPTION";
+        }
+    }
+
+    // ── HANDLERS AUTHENTIFICATION ─────────────────────────────
+    private String handleLogin(String request) {
+        try {
+            String[] parts = request.split(":");
+            if (parts.length != 3) return "ERROR:LOGIN_FORMAT";
+
+            String email = parts[1];
+            String password = parts[2];
+
+            User user = authService.login(email, password);
+            if (user != null) return "LOGIN_SUCCESS:" + user.getId() + ":" + user.getRole();
+            else return "ERROR:LOGIN_FAILED";
+
+        } catch (Exception e) {
+            return "ERROR:LOGIN_EXCEPTION";
+        }
+    }
+
+    private String handleRegister(String request) {
+        try {
+            String[] parts = request.split(":");
+            if (parts.length != 9) return "ERROR:REGISTER_FORMAT";
+
+            String nom = parts[1];
+            String prenom = parts[2];
+            String email = parts[3];
+            String password = parts[4];
+            String address = parts[5];
+            String phone = parts[6];
+            String ville = parts[7];
+
+            boolean success = authService.register(nom, prenom, email, password, address, phone, ville);
+            return success ? "REGISTER_SUCCESS" : "ERROR:REGISTER_FAILED";
+
+        } catch (Exception e) {
+            return "ERROR:REGISTER_EXCEPTION";
         }
     }
 
