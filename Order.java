@@ -1,81 +1,143 @@
 package e_commerce;
 
-import java.sql.*;
-import java.util.ArrayList;
+import java.util.UUID;
 import java.util.List;
-import database.DatabaseConnection;
+import java.util.ArrayList;
+import java.time.LocalDateTime;
 
-public class OrderDAO {
+public class Order {
 
-    private Connection conn;
+    private int id;
+    private String orderUUID;
+    private double totalPrice;
+    private String status;
+    private LocalDateTime createdAt;
+    private List<OrderItem> items = new ArrayList<>();
+    private Payment payment;
 
-    public OrderDAO() throws SQLException {
-        this.conn = DatabaseConnection.getConnection();
+    public Order(int id) {
+        this.id = id;
+        this.orderUUID = UUID.randomUUID().toString();
+        this.status = "pending";
+        this.createdAt = LocalDateTime.now();
+        this.totalPrice = 0;
+    }
+    
+    public Order() {
+        this.orderUUID = UUID.randomUUID().toString();
+        this.status = "pending";
+        this.createdAt = LocalDateTime.now();
+        this.totalPrice = 0;
+    }
+    
+
+    public LocalDateTime getCreatedAt() {
+		return createdAt;
+	}
+
+
+
+
+	public void setCreatedAt(LocalDateTime createdAt) {
+		this.createdAt = createdAt;
+	}
+
+
+
+
+	public void setId(int id) {
+		this.id = id;
+	}
+
+
+
+
+	public void setOrderUUID(String orderUUID) {
+		this.orderUUID = orderUUID;
+	}
+
+
+
+
+	public void setTotalPrice(double totalPrice) {
+		this.totalPrice = totalPrice;
+	}
+
+
+
+
+	public void setStatus(String status) {
+		this.status = status;
+	}
+
+
+
+
+	public void setItems(List<OrderItem> items) {
+		this.items = items;
+	}
+
+
+
+
+	public void setPayment(Payment payment) {
+		this.payment = payment;
+	}
+
+
+
+
+	// ===== Getters =====
+    public int getId() { return id; }
+    public String getOrderUUID() { return orderUUID; }
+    public double getTotalPrice() { return totalPrice; }
+    public String getStatus() { return status; }
+    public List<OrderItem> getItems() { return items; }
+    public Payment getPayment() { return payment; }
+
+    // ===== Ajouter un item et recalculer le total =====
+    public void ajouterItem(OrderItem item) {
+        items.add(item);
+        calculTotal();
     }
 
-    // ── Enregistrer une commande ─────────────────────────────
-    public void save(Order order, int clientId) throws SQLException {
-        String sql = "INSERT INTO orders (order_uuid, client_id, total_price, status, created_at) VALUES (?, ?, ?, ?, ?)";
-
-        try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-            ps.setString(1, order.getOrderUUID());
-            ps.setInt(2, clientId);
-            ps.setDouble(3, order.getTotalPrice());
-            ps.setString(4, order.getStatus());
-            ps.setTimestamp(5, Timestamp.valueOf(order.getCreatedAt()));
-
-            ps.executeUpdate();
-
-            ResultSet rs = ps.getGeneratedKeys();
-            if (rs.next()) {
-                order.setId(rs.getInt(1)); 
-            }
+    public double calculTotal() {
+        double total = 0;
+        for (OrderItem item : items) {
+            total += item.calculSubtotal();
         }
+        this.totalPrice = total;
+        return total;
+    }
 
-        // Sauvegarder les items
-        if (!order.getItems().isEmpty()) {
-            OrderItemDAO itemDAO = new OrderItemDAO();
-            for (OrderItem item : order.getItems()) {
-                itemDAO.save(item, order.getId());
-            }
+    // ===== Gestion du statut de la commande =====
+    public void validerCommande() {
+        status = "validated";
+        System.out.println("Commande validée.");
+    }
+
+    public void payerCommande(Payment payment) {
+        this.payment = payment;
+
+        // Utiliser processPayment() de Payment
+        if (payment.processPayment()) {
+            status = "paid";
+            System.out.println("Paiement réussi !");
+        } else {
+            status = "pending"; // ou "failed" selon ton choix
+            System.out.println("Paiement échoué !");
         }
     }
 
-    // ── Récupérer les commandes d’un client ─────────────────
-    public List<Order> findByClient(int clientId) throws SQLException {
-        List<Order> orders = new ArrayList<>();
-        String sql = "SELECT * FROM orders WHERE client_id = ?";
-
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, clientId);
-            ResultSet rs = ps.executeQuery();
-
-            while (rs.next()) {
-                Order order = new Order(rs.getInt("id"));
-
-                order.setOrderUUID(rs.getString("order_uuid"));
-                order.setTotalPrice(rs.getDouble("total_price"));
-                order.setStatus(rs.getString("status"));
-                order.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
-
-                // Charger les items
-                OrderItemDAO itemDAO = new OrderItemDAO();
-                order.getItems().addAll(itemDAO.findByOrder(order.getId()));
-
-                orders.add(order);
-            }
-        }
-        return orders;
+    public void cancelOrder() {
+        status = "cancelled";
+        System.out.println("Commande annulée.");
     }
 
-    // ── Mettre à jour le statut ─────────────────────────────
-    public void updateStatus(int orderId, String newStatus) throws SQLException {
-        String sql = "UPDATE orders SET status = ? WHERE id = ?";
-
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, newStatus);
-            ps.setInt(2, orderId);
-            ps.executeUpdate();
-        }
-    }
+  
 }
+
+
+
+
+

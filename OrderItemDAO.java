@@ -10,7 +10,6 @@ public class OrderItemDAO {
 
     public OrderItemDAO() throws SQLException {
         this.conn = database.DatabaseConnection.getConnection(); 
-        
     }
 
     // ── Ajouter un item ──────────────────────
@@ -21,9 +20,9 @@ public class OrderItemDAO {
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, orderId);
-            ps.setInt(2, item.getProduct().getIdProduct());
+            ps.setInt(2, item.getProductId()); // ✅ productId
             ps.setInt(3, item.getQuantity());
-            ps.setDouble(4, item.getUnitPrice());
+            ps.setDouble(4, item.getPrice()); // ✅ prix unitaire
 
             ps.executeUpdate();
         }
@@ -41,14 +40,12 @@ public class OrderItemDAO {
             ResultSet rs = ps.executeQuery();
 
             while (rs.next()) {
-
-                // 🔥 On met NULL pour éviter erreurs constructeur
+                // constructeur adapté
                 OrderItem item = new OrderItem(
-                        rs.getInt("id"),
-                        null, // order
-                        null, // product
-                        rs.getInt("quantity"),
-                        rs.getDouble("unit_price")
+                        rs.getInt("id"),          // id
+                        rs.getInt("product_id"),  // productId
+                        rs.getInt("quantity"),    // quantity
+                        rs.getDouble("unit_price")// price
                 );
 
                 items.add(item);
