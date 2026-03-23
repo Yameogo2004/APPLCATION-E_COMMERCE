@@ -170,9 +170,11 @@ public class RegisterFrame extends JFrame {
         );
 
         if ("REGISTER_SUCCESS".equals(response)) {
-            JOptionPane.showMessageDialog(this, "Inscription réussie.");
-            backFrame.setVisible(true);
-            dispose();
+            // Au lieu de montrer directement "Inscription réussie", ouvrir la fenêtre OTP
+            OtpFrame otpFrame = new OtpFrame(clientService, email, this);
+            otpFrame.setVisible(true);
+            // Optionnel : masquer le RegisterFrame pendant la saisie OTP
+            this.setVisible(false);
         } else {
             statusLabel.setText("Erreur : " + response);
         }

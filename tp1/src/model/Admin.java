@@ -10,9 +10,10 @@ public class Admin extends User {
     // ── Implémentation des méthodes abstraites de User ──
     @Override
     public boolean login(String email, String password) {
-        return this.getEmail().equals(email) && this.getPassword().equals(password);
+        // Authentification déléguée à AuthService — ne pas utiliser directement
+        return false;
     }
-
+    
     @Override
     public void logout() {
         System.out.println("Admin " + getNom() + " déconnecté.");

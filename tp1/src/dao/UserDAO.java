@@ -64,6 +64,9 @@ public class UserDAO {
         String sqlClient = "INSERT INTO clients (id, address, phone, ville) " +
                            "VALUES (?, ?, ?, ?)";
         try {
+            // Désactiver l'auto-commit pour démarrer la transaction
+            connection.setAutoCommit(false);
+
             PreparedStatement psUser = connection.prepareStatement(
                 sqlUser, Statement.RETURN_GENERATED_KEYS);
             psUser.setString(1, client.getNom());
@@ -84,12 +87,25 @@ public class UserDAO {
                 psClient.setString(4, client.getVille());
                 psClient.executeUpdate();
             }
+
+            // Les deux INSERT ont réussi → on valide
+            connection.commit();
             System.out.println("Client enregistré avec succès !");
             return true;
 
         } catch (SQLException e) {
-            System.out.println(" Erreur : " + e.getMessage());
+            // Un INSERT a échoué → on annule tout
+            try { connection.rollback(); } catch (SQLException ex) {
+                System.out.println("Erreur rollback : " + ex.getMessage());
+            }
+            System.out.println("Erreur save (transaction annulée) : " + e.getMessage());
             return false;
+
+        } finally {
+            // Toujours remettre l'auto-commit à true après
+            try { connection.setAutoCommit(true); } catch (SQLException e) {
+                System.out.println("Erreur reset autoCommit : " + e.getMessage());
+            }
         }
     }
 

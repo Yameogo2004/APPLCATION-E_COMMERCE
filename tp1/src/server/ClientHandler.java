@@ -17,24 +17,32 @@ import service.OrderService;
 import service.PaymentService;
 import service.ProductService;
 
+import service.OtpService;
+
+import service.*;
+import model.*;
+
 public class ClientHandler extends Thread {
 
     private Socket clientSocket;
     private BufferedReader in;
     private PrintWriter out;
-
+    
     private CartService cartService;
     private ProductService productService;
     private OrderService orderService;
     private PaymentService paymentService;
     private AuthService authService;
+    private OtpService otpService;
 
     public ClientHandler(Socket socket) {
         this.clientSocket = socket;
+        
         this.cartService = new CartService();
         this.productService = new ProductService();
         this.paymentService = new PaymentService();
         this.authService = new AuthService();
+        this.otpService = new OtpService();
 
         try {
             this.orderService = new OrderService();
@@ -118,6 +126,12 @@ public class ClientHandler extends Thread {
             }
             if (request.startsWith("REGISTER:")) {
                 return handleRegister(request);
+            }
+            if (request.startsWith("SEND_OTP:")) {
+                return handleSendOtp(request);
+            }
+            if (request.startsWith("VERIFY_OTP:")) {
+                return handleVerifyOtp(request);
             }
 
             return "ERROR:UNKNOWN_COMMAND";
@@ -238,23 +252,18 @@ public class ClientHandler extends Thread {
     }
 
     // ── HANDLERS PRODUITS ─────────────────────────────
-
     private String handleGetProducts() {
         try {
             List<Product> products = productService.getAllProducts();
-
             if (products == null || products.isEmpty()) {
                 return "NO_PRODUCTS";
             }
-
             StringBuilder sb = new StringBuilder();
-
             for (Product p : products) {
                 String categoryName = "Sans catégorie";
                 if (p.getCategory() != null && p.getCategory().getName() != null) {
                     categoryName = p.getCategory().getName();
                 }
-
                 sb.append(p.getIdProduct()).append(";")
                   .append(safe(p.getName())).append(";")
                   .append(p.getPrice()).append(";")
@@ -263,30 +272,24 @@ public class ClientHandler extends Thread {
                   .append(p.getStock())
                   .append("|");
             }
-
             return sb.substring(0, sb.length() - 1);
-
         } catch (Exception e) {
             e.printStackTrace();
             return "ERROR:GET_PRODUCTS_FAILED";
         }
     }
-
+    
     private String handleGetProduct(String request) {
         try {
             String[] parts = request.split(":");
             if (parts.length != 2) return "ERROR:GET_PRODUCT_FORMAT";
-
             int productId = Integer.parseInt(parts[1]);
             Product p = productService.getProductById(productId);
-
             if (p == null) return "ERROR:PRODUCT_NOT_FOUND";
-
             String categoryName = "Sans catégorie";
             if (p.getCategory() != null && p.getCategory().getName() != null) {
                 categoryName = p.getCategory().getName();
             }
-
             return p.getIdProduct() + ";" +
                    safe(p.getName()) + ";" +
                    p.getPrice() + ";" +
@@ -294,7 +297,6 @@ public class ClientHandler extends Thread {
                    p.getStock() + ";" +
                    safe(p.getImage()) + ";" +
                    safe(categoryName);
-
         } catch (NumberFormatException e) {
             return "ERROR:INVALID_NUMBER_FORMAT";
         } catch (Exception e) {
@@ -304,26 +306,19 @@ public class ClientHandler extends Thread {
     }
 
     // ── HANDLER CHECKOUT ─────────────────────────────
-
     private String handleCheckout(String request) {
         try {
             if (orderService == null) return "ERROR:ORDER_SERVICE_NOT_INITIALIZED";
-
             String[] parts = request.split(":");
             if (parts.length != 2) return "ERROR:CHECKOUT_FORMAT";
-
             int clientId = Integer.parseInt(parts[1]);
             Cart cart = cartService.getCartByClient(clientId);
-
             if (cart == null || cart.getItems() == null || cart.getItems().isEmpty()) {
                 return "ERROR:CART_EMPTY";
             }
-
             Order order = orderService.createOrder(clientId, cart.getItems());
             cartService.clearCart(clientId);
-
             return "ORDER_CREATED;" + order.getOrderUUID() + ";" + order.getTotalPrice();
-
         } catch (Exception e) {
             e.printStackTrace();
             return "ERROR:CHECKOUT_EXCEPTION";
@@ -331,35 +326,27 @@ public class ClientHandler extends Thread {
     }
 
     // ── HANDLER PAYMENT ─────────────────────────────
-
     private String handlePayment(String request) {
         try {
             if (orderService == null) return "ERROR:ORDER_SERVICE_NOT_INITIALIZED";
-
             String[] parts = request.split(":");
             if (parts.length != 3) return "ERROR:PAYMENT_FORMAT";
-
             String orderUUID = parts[1];
             String method = parts[2];
-
             Order order = orderService.getOrderByUUID(orderUUID);
             if (order == null) return "ERROR:ORDER_NOT_FOUND";
-
             Payment payment = new Payment();
             payment.setOrderId(order.getId());
             payment.setMethod(method);
             payment.setAmount(order.getTotalPrice());
             payment.setStatus("pending");
-
             boolean success = paymentService.processPayment(payment);
-
             if (success) {
-                orderService.updateStatus(order.getId(), "paid");
+                orderService.updateStatus(order.getId(), "validated");
                 return "PAYMENT_SUCCESS;" + order.getOrderUUID();
             } else {
                 return "PAYMENT_FAILED;" + order.getOrderUUID();
             }
-
         } catch (Exception e) {
             e.printStackTrace();
             return "ERROR:PAYMENT_EXCEPTION";
@@ -370,7 +357,7 @@ public class ClientHandler extends Thread {
 
     private String handleLogin(String request) {
         try {
-            String[] parts = request.split(":");
+            String[] parts = request.split(":", 3);
             if (parts.length != 3) return "ERROR:LOGIN_FORMAT";
 
             String email = parts[1];
@@ -378,7 +365,7 @@ public class ClientHandler extends Thread {
 
             User user = authService.login(email, password);
             if (user != null) {
-                return "LOGIN_SUCCESS:" + user.getId() + ":" + user.getRole();
+                return "LOGIN_SUCCESS:" + user.getId() + ":" + user.getRole() + ":" + user.getNom();
             } else {
                 return "ERROR:LOGIN_FAILED";
             }
@@ -391,23 +378,66 @@ public class ClientHandler extends Thread {
 
     private String handleRegister(String request) {
         try {
-            String[] parts = request.split(":");
+            String[] parts = request.split(":", 8);
             if (parts.length != 8) return "ERROR:REGISTER_FORMAT";
 
-            String nom = parts[1];
-            String prenom = parts[2];
-            String email = parts[3];
+            String nom     = parts[1];
+            String prenom  = parts[2];
+            String email   = parts[3];
             String password = parts[4];
             String address = parts[5];
-            String phone = parts[6];
-            String ville = parts[7];
+            String phone   = parts[6];
+            String ville   = parts[7];
+
+            if (nom.isEmpty() || prenom.isEmpty() || email.isEmpty() || password.isEmpty()) {
+                return "ERROR:REGISTER_EMPTY_FIELDS";
+            }
 
             boolean success = authService.register(nom, prenom, email, password, address, phone, ville);
-            return success ? "REGISTER_SUCCESS" : "ERROR:REGISTER_FAILED";
 
+            if (success) {
+                boolean otpSent = otpService.sendOtp(email);
+                return otpSent ? "REGISTER_SUCCESS" : "ERROR:OTP_SEND_FAILED";
+            }
+
+            return "ERROR:REGISTER_FAILED";
         } catch (Exception e) {
             e.printStackTrace();
             return "ERROR:REGISTER_EXCEPTION";
+        }
+    }
+
+    private String handleSendOtp(String request) {
+        try {
+            String[] parts = request.split(":", 2);
+            if (parts.length != 2) return "ERROR:SEND_OTP_FORMAT";
+
+            String email = parts[1];
+            boolean sent = otpService.sendOtp(email);
+
+            return sent ? "OTP_SENT" : "ERROR:OTP_SEND_FAILED";
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "ERROR:SEND_OTP_EXCEPTION";
+        }
+    }
+
+    private String handleVerifyOtp(String request) {
+        try {
+            String[] parts = request.split(":", 3);
+            if (parts.length != 3) return "ERROR:VERIFY_OTP_FORMAT";
+
+            String email = parts[1];
+            String code  = parts[2];
+
+            boolean valid = otpService.verifyOtp(email, code);
+
+            return valid ? "OTP_VERIFIED" : "ERROR:OTP_INVALID";
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "ERROR:VERIFY_OTP_EXCEPTION";
         }
     }
 

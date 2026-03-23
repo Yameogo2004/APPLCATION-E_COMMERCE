@@ -135,11 +135,12 @@ public class LoginFrame extends JFrame {
 
         if (response != null && response.startsWith("LOGIN_SUCCESS")) {
             try {
-                String[] parts = response.split(":");
+                String[] parts = response.split(":", 4);
 
                 AppSession session = new AppSession();
                 session.setClientId(Integer.parseInt(parts[1]));
                 session.setRole(parts[2]);
+                session.setNom(parts[3]);
 
                 dispose();
                 new ShopFrame(clientService, session).setVisible(true);

@@ -92,6 +92,14 @@ public class ClientSocketService {
     public String pay(String uuid, String method) {
         return sendRequest("PAYMENT:" + uuid + ":" + method);
     }
+    
+    public String sendOtp(String email) {
+        return sendRequest("SEND_OTP:" + email);
+    }
+
+    public String verifyOtp(String email, String code) {
+        return sendRequest("VERIFY_OTP:" + email + ":" + code);
+    }
 
     public void close() {
         try {

@@ -23,7 +23,7 @@ public abstract class User {
         this.createdAt = new Date();
     }
 
-
+    // Implémentée dans les sous-classes — logique réelle dans AuthService
     public abstract boolean login(String email, String password);
     public abstract void logout();
 

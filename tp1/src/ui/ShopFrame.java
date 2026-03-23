@@ -52,7 +52,7 @@ public class ShopFrame extends JFrame {
         JPanel rightTop = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         rightTop.setOpaque(false);
 
-        JLabel welcome = new JLabel("Welcome, client #" + session.getClientId());
+        JLabel welcome = new JLabel("Bienvenue " + session.getNom());
         welcome.setForeground(UITheme.TEXT);
 
         JButton logoutBtn = UITheme.blueButton("Logout");
