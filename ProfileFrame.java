@@ -1,0 +1,199 @@
+package ui;
+
+import Client.AppSession;
+import Client.ClientSocketService;
+
+import javax.swing.*;
+import java.awt.*;
+
+public class ProfileFrame extends LanguageAwareFrame {
+
+    private final ClientSocketService clientService;
+    private final AppSession session;
+    private final JFrame backFrame;
+    
+    private JLabel welcomeLabel;
+    private JLabel nameLabel;
+    private JLabel emailLabel;
+    private JLabel phoneLabel;
+    private JLabel addressLabel;
+    private JLabel cityLabel;
+    private JButton editBtn;
+    private JButton ordersBtn;
+    private JButton backBtn;
+
+    public ProfileFrame(ClientSocketService clientService, AppSession session, JFrame backFrame) {
+        this.clientService = clientService;
+        this.session = session;
+        this.backFrame = backFrame;
+        initUI();
+        refreshProfile();
+    }
+
+    private void initUI() {
+        setTitle(LanguageManager.getInstance().getText("profile.title"));
+        setSize(600, 550);
+        setLocationRelativeTo(null);
+        setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+
+        JPanel root = UITheme.darkPanel();
+        root.setLayout(new BorderLayout(10, 10));
+        root.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+
+        JPanel header = UITheme.cardPanel();
+        header.setLayout(new BorderLayout());
+        
+        JLabel titleLabel = new JLabel("👤 " + LanguageManager.getInstance().getText("profile.title"));
+        titleLabel.setForeground(Color.WHITE);
+        titleLabel.setFont(new Font("SansSerif", Font.BOLD, 24));
+        header.add(titleLabel, BorderLayout.WEST);
+        
+        root.add(header, BorderLayout.NORTH);
+
+        JPanel content = UITheme.cardPanel();
+        content.setLayout(new BorderLayout(15, 15));
+        content.setBorder(BorderFactory.createEmptyBorder(20, 25, 20, 25));
+
+        // Zone de bienvenue
+        JPanel welcomePanel = new JPanel();
+        welcomePanel.setOpaque(false);
+        welcomePanel.setLayout(new BoxLayout(welcomePanel, BoxLayout.Y_AXIS));
+        
+        welcomeLabel = new JLabel(LanguageManager.getInstance().getText("profile.welcome") + " !");
+        welcomeLabel.setForeground(UITheme.GOLD);
+        welcomeLabel.setFont(new Font("SansSerif", Font.BOLD, 20));
+        welcomeLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
+        welcomePanel.add(welcomeLabel);
+        welcomePanel.add(Box.createVerticalStrut(15));
+        
+        JSeparator sep = new JSeparator();
+        sep.setForeground(UITheme.BORDER);
+        welcomePanel.add(sep);
+        
+        content.add(welcomePanel, BorderLayout.NORTH);
+
+        // Zone informations
+        JPanel infoPanel = new JPanel();
+        infoPanel.setOpaque(false);
+        infoPanel.setLayout(new GridLayout(5, 2, 15, 12));
+        
+        infoPanel.add(createLabel("👤 " + LanguageManager.getInstance().getText("profile.name") + " :"));
+        nameLabel = createValueLabel("---");
+        infoPanel.add(nameLabel);
+        
+        infoPanel.add(createLabel("📧 " + LanguageManager.getInstance().getText("profile.email") + " :"));
+        emailLabel = createValueLabel("---");
+        infoPanel.add(emailLabel);
+        
+        infoPanel.add(createLabel("📱 " + LanguageManager.getInstance().getText("profile.phone") + " :"));
+        phoneLabel = createValueLabel("---");
+        infoPanel.add(phoneLabel);
+        
+        infoPanel.add(createLabel("🏠 " + LanguageManager.getInstance().getText("profile.address") + " :"));
+        addressLabel = createValueLabel("---");
+        infoPanel.add(addressLabel);
+        
+        infoPanel.add(createLabel("🏙️ " + LanguageManager.getInstance().getText("profile.city") + " :"));
+        cityLabel = createValueLabel("---");
+        infoPanel.add(cityLabel);
+        
+        content.add(infoPanel, BorderLayout.CENTER);
+
+        // Zone boutons
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 0));
+        buttonPanel.setOpaque(false);
+        
+        editBtn = UITheme.blueButton("✏️ " + LanguageManager.getInstance().getText("profile.edit"));
+        ordersBtn = UITheme.primaryButton("📦 " + LanguageManager.getInstance().getText("profile.orders"));
+        backBtn = UITheme.dangerButton("← " + LanguageManager.getInstance().getText("cart.back"));
+        
+        editBtn.addActionListener(e -> {
+            new EditProfileFrame(clientService, session, this).setVisible(true);
+        });
+        
+        ordersBtn.addActionListener(e -> {
+            new OrderHistoryFrame(clientService, session).setVisible(true);
+        });
+        
+        backBtn.addActionListener(e -> {
+            dispose();
+            backFrame.setVisible(true);
+        });
+        
+        buttonPanel.add(editBtn);
+        buttonPanel.add(ordersBtn);
+        buttonPanel.add(backBtn);
+        
+        content.add(buttonPanel, BorderLayout.SOUTH);
+
+        root.add(content, BorderLayout.CENTER);
+        setContentPane(root);
+    }
+    
+    private JLabel createLabel(String text) {
+        JLabel label = new JLabel(text);
+        label.setForeground(UITheme.TEXT);
+        label.setFont(new Font("SansSerif", Font.BOLD, 14));
+        return label;
+    }
+    
+    private JLabel createValueLabel(String text) {
+        JLabel label = new JLabel(text);
+        label.setForeground(UITheme.MUTED);
+        label.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        return label;
+    }
+    
+    public void refreshProfile() {
+        // Simulation - À remplacer par l'appel serveur réel
+        // String response = clientService.getProfile(session.getClientId());
+        
+        welcomeLabel.setText(LanguageManager.getInstance().getText("profile.welcome") + " Jean Dupont");
+        nameLabel.setText("Jean Dupont");
+        emailLabel.setText("jean.dupont@email.com");
+        phoneLabel.setText("06 12 34 56 78");
+        addressLabel.setText("123 Rue Example, Centre-ville");
+        cityLabel.setText("Casablanca");
+        
+        revalidate();
+        repaint();
+    }
+    
+    @Override
+    public void refreshTexts() {
+        setTitle(LanguageManager.getInstance().getText("profile.title"));
+        
+        // Mettre à jour les labels
+        Component[] components = ((JPanel)getContentPane().getComponent(1)).getComponents();
+        if (components.length > 1 && components[1] instanceof JPanel) {
+            JPanel infoPanel = (JPanel) components[1];
+            Component[] infoComps = infoPanel.getComponents();
+            for (int i = 0; i < infoComps.length; i += 2) {
+                if (infoComps[i] instanceof JLabel) {
+                    String text = ((JLabel) infoComps[i]).getText();
+                    if (text.contains("Nom")) {
+                        ((JLabel) infoComps[i]).setText("👤 " + LanguageManager.getInstance().getText("profile.name") + " :");
+                    } else if (text.contains("Email")) {
+                        ((JLabel) infoComps[i]).setText("📧 " + LanguageManager.getInstance().getText("profile.email") + " :");
+                    } else if (text.contains("Tél")) {
+                        ((JLabel) infoComps[i]).setText("📱 " + LanguageManager.getInstance().getText("profile.phone") + " :");
+                    } else if (text.contains("Adresse")) {
+                        ((JLabel) infoComps[i]).setText("🏠 " + LanguageManager.getInstance().getText("profile.address") + " :");
+                    } else if (text.contains("Ville")) {
+                        ((JLabel) infoComps[i]).setText("🏙️ " + LanguageManager.getInstance().getText("profile.city") + " :");
+                    }
+                }
+            }
+        }
+        
+        editBtn.setText("✏️ " + LanguageManager.getInstance().getText("profile.edit"));
+        ordersBtn.setText("📦 " + LanguageManager.getInstance().getText("profile.orders"));
+        backBtn.setText("← " + LanguageManager.getInstance().getText("cart.back"));
+        
+        welcomeLabel.setText(LanguageManager.getInstance().getText("profile.welcome") + " " + nameLabel.getText());
+        
+        revalidate();
+        repaint();
+    }
+}
