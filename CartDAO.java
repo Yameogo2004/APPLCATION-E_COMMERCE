@@ -11,13 +11,12 @@ import java.util.List;
 
 public class CartDAO {
 
-    private Connection conn;
+    private final Connection conn;
 
     public CartDAO() {
         this.conn = DatabaseConnection.getConnection();
     }
 
-    // ── Récupérer le panier d’un client ─────────────────────────
     public Cart getCartByClient(int clientId) {
         String sqlCart = "SELECT * FROM carts WHERE client_id = ?";
         String sqlItems = "SELECT ci.id, ci.quantity, p.id_product, p.name, p.description, p.image, p.price, p.stock " +
@@ -64,14 +63,13 @@ public class CartDAO {
                         int productId = rsItems.getInt("id_product");
                         if (!rsItems.wasNull()) {
                             Product product = new Product(
-                                productId,
-                                rsItems.getString("name"),
-                                rsItems.getString("description"),
-                                rsItems.getString("image"),
-                                rsItems.getDouble("price"),
-                                rsItems.getInt("stock")
+                                    productId,
+                                    rsItems.getString("name"),
+                                    rsItems.getString("description"),
+                                    rsItems.getString("image"),
+                                    rsItems.getDouble("price"),
+                                    rsItems.getInt("stock")
                             );
-
                             item.setProduct(product);
                         }
 
@@ -90,7 +88,6 @@ public class CartDAO {
         }
     }
 
-    // ── Créer un panier s’il n’existe pas ───────────────────────
     private int createCart(int clientId) {
         String sql = "INSERT INTO carts (client_id) VALUES (?)";
 
@@ -110,7 +107,6 @@ public class CartDAO {
         return -1;
     }
 
-    // ── Ajouter un produit au panier ────────────────────────────
     public boolean addItem(int cartId, CartItem item) {
         if (item == null || item.getProduct() == null) {
             System.out.println("Erreur addItem : produit invalide.");
@@ -151,7 +147,6 @@ public class CartDAO {
         }
     }
 
-    // ── Supprimer un produit du panier ──────────────────────────
     public boolean removeItem(int cartId, int productId) {
         String sql = "DELETE FROM cart_items WHERE cart_id = ? AND product_id = ?";
 
@@ -168,7 +163,25 @@ public class CartDAO {
         }
     }
 
-    // ── Vider le panier ─────────────────────────────────────────
+    // ✅ optionnel mais utile
+    public boolean removeItemByProductName(int cartId, String productName) {
+        String sql = "DELETE ci FROM cart_items ci " +
+                     "JOIN products p ON ci.product_id = p.id_product " +
+                     "WHERE ci.cart_id = ? AND p.name = ?";
+
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, cartId);
+            ps.setString(2, productName);
+
+            int rows = ps.executeUpdate();
+            return rows > 0;
+
+        } catch (SQLException e) {
+            System.out.println("Erreur removeItemByProductName : " + e.getMessage());
+            return false;
+        }
+    }
+
     public boolean clear(int cartId) {
         String sql = "DELETE FROM cart_items WHERE cart_id = ?";
 

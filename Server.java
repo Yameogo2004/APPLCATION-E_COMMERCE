@@ -19,7 +19,7 @@ public class Server {
                 System.out.println("Nouveau client connecté : " + clientSocket.getInetAddress());
 
                 ClientHandler clientHandler = new ClientHandler(clientSocket);
-                clientHandler.start();
+                new Thread(clientHandler).start();
             }
 
         } catch (IOException e) {

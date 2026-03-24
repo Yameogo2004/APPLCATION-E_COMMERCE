@@ -1,77 +1,72 @@
 package ui;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 
 public class LanguageManager {
-    
-    // Langues disponibles
+
     public enum Language {
         FRENCH("Français", "🇫🇷", "fr"),
         ENGLISH("English", "🇬🇧", "en"),
         ARABIC("العربية", "🇲🇦", "ar");
-        
-        private String displayName;
-        private String flag;
-        private String code;
-        
+
+        private final String displayName;
+        private final String flag;
+        private final String code;
+
         Language(String displayName, String flag, String code) {
             this.displayName = displayName;
             this.flag = flag;
             this.code = code;
         }
-        
+
         public String getDisplayName() { return displayName; }
         public String getFlag() { return flag; }
         public String getCode() { return code; }
     }
-    
+
     private static Language currentLanguage = Language.FRENCH;
     private static LanguageManager instance;
+
     private Map<String, Map<String, String>> translations;
-    private List<LanguageChangeListener> listeners = new ArrayList<>();
-    
-    // Interface pour les listeners
+    private final List<LanguageChangeListener> listeners = new ArrayList<>();
+
     public interface LanguageChangeListener {
         void onLanguageChanged();
     }
-    
+
     private LanguageManager() {
         loadTranslations();
     }
-    
+
     public static LanguageManager getInstance() {
         if (instance == null) {
             instance = new LanguageManager();
         }
         return instance;
     }
-    
+
     public static void setLanguage(Language lang) {
         currentLanguage = lang;
-        // Notifier tous les listeners
         if (instance != null) {
-            for (LanguageChangeListener listener : instance.listeners) {
+            List<LanguageChangeListener> copy = new ArrayList<>(instance.listeners);
+            for (LanguageChangeListener listener : copy) {
                 listener.onLanguageChanged();
             }
         }
     }
-    
+
     public static Language getCurrentLanguage() {
         return currentLanguage;
     }
-    
+
     public void addLanguageChangeListener(LanguageChangeListener listener) {
         listeners.add(listener);
     }
-    
+
     public void removeLanguageChangeListener(LanguageChangeListener listener) {
         listeners.remove(listener);
     }
-    
+
     public String getText(String key) {
         Map<String, String> langMap = translations.get(currentLanguage.getCode());
         if (langMap != null && langMap.containsKey(key)) {
@@ -79,11 +74,10 @@ public class LanguageManager {
         }
         return key;
     }
-    
+
     private void loadTranslations() {
         translations = new HashMap<>();
-        
-        // ========== FRANÇAIS ==========
+
         Map<String, String> fr = new HashMap<>();
         fr.put("app.title", "ChriOnline - Votre Boutique");
         fr.put("login.title", "Connexion");
@@ -95,7 +89,7 @@ public class LanguageManager {
         fr.put("login.error.empty", "Veuillez remplir tous les champs.");
         fr.put("login.error.invalid", "Email ou mot de passe incorrect.");
         fr.put("login.error.server", "Serveur inaccessible.");
-        
+
         fr.put("register.title", "Créer un compte");
         fr.put("register.subtitle", "Inscription client");
         fr.put("register.firstname", "Prénom");
@@ -113,7 +107,7 @@ public class LanguageManager {
         fr.put("register.error.email", "Email invalide.");
         fr.put("register.error.password.length", "Le mot de passe doit contenir au moins 6 caractères.");
         fr.put("register.error.password.match", "Les mots de passe ne correspondent pas.");
-        
+
         fr.put("shop.title", "ChriOnline - Votre Boutique");
         fr.put("shop.search", "Rechercher");
         fr.put("shop.search.placeholder", "Rechercher un produit...");
@@ -124,18 +118,20 @@ public class LanguageManager {
         fr.put("shop.empty", "Aucun produit trouvé");
         fr.put("shop.all", "Tous les produits");
         fr.put("shop.general", "Général");
-        
+        fr.put("shop.admin", "Admin Panel");
+        fr.put("shop.profile", "Mon Profil");
+
         fr.put("product.category", "Catégorie");
         fr.put("product.stock", "Stock");
         fr.put("product.stock.limited", "Stock limité");
         fr.put("product.stock.out", "Rupture de stock");
         fr.put("product.price", "Prix");
-        fr.put("product.add", "Ajouter au panier");
+        fr.put("product.add", "Ajouter");
         fr.put("product.quantity", "Quantité");
         fr.put("product.description", "Description");
         fr.put("product.no.description", "Aucune description disponible.");
-        fr.put("product.details", "Détails du produit");
-        
+        fr.put("product.details", "Détails");
+
         fr.put("cart.title", "Mon Panier");
         fr.put("cart.empty", "Votre panier est vide");
         fr.put("cart.product", "Produit");
@@ -151,7 +147,7 @@ public class LanguageManager {
         fr.put("cart.clear.confirm", "Voulez-vous vraiment vider tout le panier ?");
         fr.put("cart.clear.success", "Panier vidé avec succès !");
         fr.put("cart.add.success", "ajouté au panier !");
-        
+
         fr.put("payment.title", "Paiement sécurisé");
         fr.put("payment.order", "Commande");
         fr.put("payment.method", "Méthode de paiement");
@@ -163,7 +159,7 @@ public class LanguageManager {
         fr.put("payment.success", "Paiement réussi !");
         fr.put("payment.failed", "Échec du paiement");
         fr.put("payment.cancel", "Annuler le paiement");
-        
+
         fr.put("profile.title", "Mon Profil");
         fr.put("profile.welcome", "Bienvenue");
         fr.put("profile.info", "Informations personnelles");
@@ -185,15 +181,10 @@ public class LanguageManager {
         fr.put("profile.phone", "Téléphone");
         fr.put("profile.address", "Adresse");
         fr.put("profile.city", "Ville");
-        
+
         fr.put("language", "Langue");
-        fr.put("language.french", "Français");
-        fr.put("language.english", "English");
-        fr.put("language.arabic", "العربية");
-        
         translations.put("fr", fr);
-        
-        // ========== ENGLISH ==========
+
         Map<String, String> en = new HashMap<>();
         en.put("app.title", "ChriOnline - Your Store");
         en.put("login.title", "Login");
@@ -205,7 +196,7 @@ public class LanguageManager {
         en.put("login.error.empty", "Please fill all fields.");
         en.put("login.error.invalid", "Invalid email or password.");
         en.put("login.error.server", "Server unavailable.");
-        
+
         en.put("register.title", "Create Account");
         en.put("register.subtitle", "Customer registration");
         en.put("register.firstname", "First Name");
@@ -223,7 +214,7 @@ public class LanguageManager {
         en.put("register.error.email", "Invalid email.");
         en.put("register.error.password.length", "Password must be at least 6 characters.");
         en.put("register.error.password.match", "Passwords do not match.");
-        
+
         en.put("shop.title", "ChriOnline - Your Store");
         en.put("shop.search", "Search");
         en.put("shop.search.placeholder", "Search a product...");
@@ -234,18 +225,20 @@ public class LanguageManager {
         en.put("shop.empty", "No products found");
         en.put("shop.all", "All products");
         en.put("shop.general", "General");
-        
+        en.put("shop.admin", "Admin Panel");
+        en.put("shop.profile", "My Profile");
+
         en.put("product.category", "Category");
         en.put("product.stock", "Stock");
         en.put("product.stock.limited", "Limited stock");
         en.put("product.stock.out", "Out of stock");
         en.put("product.price", "Price");
-        en.put("product.add", "Add to cart");
+        en.put("product.add", "Add");
         en.put("product.quantity", "Quantity");
         en.put("product.description", "Description");
         en.put("product.no.description", "No description available.");
-        en.put("product.details", "Product Details");
-        
+        en.put("product.details", "Details");
+
         en.put("cart.title", "My Cart");
         en.put("cart.empty", "Your cart is empty");
         en.put("cart.product", "Product");
@@ -261,7 +254,7 @@ public class LanguageManager {
         en.put("cart.clear.confirm", "Are you sure you want to clear the cart?");
         en.put("cart.clear.success", "Cart cleared successfully!");
         en.put("cart.add.success", "added to cart!");
-        
+
         en.put("payment.title", "Secure Payment");
         en.put("payment.order", "Order");
         en.put("payment.method", "Payment Method");
@@ -273,7 +266,7 @@ public class LanguageManager {
         en.put("payment.success", "Payment successful!");
         en.put("payment.failed", "Payment failed");
         en.put("payment.cancel", "Cancel payment");
-        
+
         en.put("profile.title", "My Profile");
         en.put("profile.welcome", "Welcome");
         en.put("profile.info", "Personal Information");
@@ -295,15 +288,10 @@ public class LanguageManager {
         en.put("profile.phone", "Phone");
         en.put("profile.address", "Address");
         en.put("profile.city", "City");
-        
+
         en.put("language", "Language");
-        en.put("language.french", "Français");
-        en.put("language.english", "English");
-        en.put("language.arabic", "العربية");
-        
         translations.put("en", en);
-        
-        // ========== ARABIC ==========
+
         Map<String, String> ar = new HashMap<>();
         ar.put("app.title", "شري أونلاين - متجرك");
         ar.put("login.title", "تسجيل الدخول");
@@ -315,7 +303,7 @@ public class LanguageManager {
         ar.put("login.error.empty", "الرجاء ملء جميع الحقول.");
         ar.put("login.error.invalid", "البريد الإلكتروني أو كلمة المرور غير صحيحة.");
         ar.put("login.error.server", "الخادم غير متاح.");
-        
+
         ar.put("register.title", "إنشاء حساب");
         ar.put("register.subtitle", "تسجيل عميل جديد");
         ar.put("register.firstname", "الاسم");
@@ -333,7 +321,7 @@ public class LanguageManager {
         ar.put("register.error.email", "بريد إلكتروني غير صالح.");
         ar.put("register.error.password.length", "يجب أن تحتوي كلمة المرور على 6 أحرف على الأقل.");
         ar.put("register.error.password.match", "كلمات المرور غير متطابقة.");
-        
+
         ar.put("shop.title", "شري أونلاين - متجرك");
         ar.put("shop.search", "بحث");
         ar.put("shop.search.placeholder", "ابحث عن منتج...");
@@ -344,23 +332,25 @@ public class LanguageManager {
         ar.put("shop.empty", "لا توجد منتجات");
         ar.put("shop.all", "جميع المنتجات");
         ar.put("shop.general", "عام");
-        
+        ar.put("shop.admin", "لوحة الإدارة");
+        ar.put("shop.profile", "ملفي");
+
         ar.put("product.category", "التصنيف");
         ar.put("product.stock", "المخزون");
         ar.put("product.stock.limited", "مخزون محدود");
         ar.put("product.stock.out", "غير متوفر");
         ar.put("product.price", "السعر");
-        ar.put("product.add", "أضف إلى السلة");
+        ar.put("product.add", "أضف");
         ar.put("product.quantity", "الكمية");
         ar.put("product.description", "الوصف");
         ar.put("product.no.description", "لا يوجد وصف متاح.");
-        ar.put("product.details", "تفاصيل المنتج");
-        
+        ar.put("product.details", "التفاصيل");
+
         ar.put("cart.title", "سلة التسوق");
         ar.put("cart.empty", "سلة التسوق فارغة");
         ar.put("cart.product", "المنتج");
         ar.put("cart.quantity", "الكمية");
-        ar.put("cart.unit.price", "السعر الوحدة");
+        ar.put("cart.unit.price", "سعر الوحدة");
         ar.put("cart.subtotal", "المجموع");
         ar.put("cart.total", "الإجمالي");
         ar.put("cart.checkout", "إتمام الشراء");
@@ -371,7 +361,7 @@ public class LanguageManager {
         ar.put("cart.clear.confirm", "هل أنت متأكد من تفريغ السلة؟");
         ar.put("cart.clear.success", "تم تفريغ السلة بنجاح!");
         ar.put("cart.add.success", "تمت الإضافة إلى السلة!");
-        
+
         ar.put("payment.title", "دفع آمن");
         ar.put("payment.order", "الطلب");
         ar.put("payment.method", "طريقة الدفع");
@@ -383,7 +373,7 @@ public class LanguageManager {
         ar.put("payment.success", "تم الدفع بنجاح!");
         ar.put("payment.failed", "فشل الدفع");
         ar.put("payment.cancel", "إلغاء الدفع");
-        
+
         ar.put("profile.title", "ملفي الشخصي");
         ar.put("profile.welcome", "مرحباً");
         ar.put("profile.info", "المعلومات الشخصية");
@@ -405,12 +395,8 @@ public class LanguageManager {
         ar.put("profile.phone", "الهاتف");
         ar.put("profile.address", "العنوان");
         ar.put("profile.city", "المدينة");
-        
+
         ar.put("language", "اللغة");
-        ar.put("language.french", "Français");
-        ar.put("language.english", "English");
-        ar.put("language.arabic", "العربية");
-        
         translations.put("ar", ar);
     }
 }

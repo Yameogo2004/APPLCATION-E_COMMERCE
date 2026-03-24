@@ -1,4 +1,4 @@
-package e_commerce;
+package model;
 
 import java.time.LocalDateTime;
 

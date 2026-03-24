@@ -1,43 +1,63 @@
-package e_commerce;
+package model;
 
 public class OrderItem {
 
     private int id;
-    private int orderId;
-    private int productId;
+    private Product product;
     private int quantity;
-    private double price;
+    private double unitPrice;
 
-    // 🔹 constructeur vide (OBLIGATOIRE)
     public OrderItem() {
     }
 
-    // 🔹 constructeur complet (optionnel)
-    public OrderItem(int orderId, int productId, int quantity, double price) {
-        this.orderId = orderId;
-        this.productId = productId;
+    public OrderItem(int id, int productId, int quantity, double unitPrice) {
+        this.id = id;
+        this.product = new Product(productId, "", "", "", unitPrice, 0);
         this.quantity = quantity;
-        this.price = price;
+        this.unitPrice = unitPrice;
     }
 
-    // ===== getters & setters =====
-    public int getId() { return id; }
-    public void setId(int id) { this.id = id; }
+    public int getId() {
+        return id;
+    }
 
-    public int getOrderId() { return orderId; }
-    public void setOrderId(int orderId) { this.orderId = orderId; }
+    public void setId(int id) {
+        this.id = id;
+    } 
 
-    public int getProductId() { return productId; }
-    public void setProductId(int productId) { this.productId = productId; }
+    public Product getProduct() {
+        return product;
+    }
 
-    public int getQuantity() { return quantity; }
-    public void setQuantity(int quantity) { this.quantity = quantity; }
+    public void setProduct(Product product) {
+        this.product = product;
+    } 
 
-    public double getPrice() { return price; }
-    public void setPrice(double price) { this.price = price; }
+    public int getQuantity() {
+        return quantity;
+    }
 
-    // 🔹 calcul du sous-total
+    public void setQuantity(int quantity) {
+        this.quantity = quantity;
+    } 
+
+    public double getUnitPrice() {
+        return unitPrice;
+    }
+
+    public void setUnitPrice(double unitPrice) {
+        this.unitPrice = unitPrice;
+    }
+
+    public int getProductId() {
+        return product != null ? product.getIdProduct() : 0;
+    }
+
+    public double getPrice() {
+        return unitPrice;
+    }
+
     public double calculSubtotal() {
-        return quantity * price;
+        return unitPrice * quantity;
     }
 }

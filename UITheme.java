@@ -12,7 +12,6 @@ import java.util.Map;
 
 public class UITheme {
 
-    // ============ COULEURS ============
     public static final Color BG = new Color(34, 37, 46);
     public static final Color CARD = new Color(45, 49, 60);
     public static final Color CARD_2 = new Color(53, 58, 71);
@@ -25,99 +24,111 @@ public class UITheme {
     public static final Color GOLD = new Color(255, 193, 7);
     public static final Color WARNING = new Color(255, 152, 0);
     public static final Color SUCCESS = new Color(76, 175, 80);
+    public static final Color INPUT_BG = new Color(58, 62, 74);
 
-    // ============ GESTION DES IMAGES ============
-    private static final String IMAGES_DIR = "images/";
+    private static final String IMAGES_DIR = "image/";
     private static final Map<String, ImageIcon> imageCache = new HashMap<>();
-    private static final ImageIcon PLACEHOLDER_ICON;
-    
-    static {
-        PLACEHOLDER_ICON = createPlaceholderIcon(100, 100);
+
+    private UITheme() {
     }
-    
+
     private static ImageIcon createPlaceholderIcon(int width, int height) {
         BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g2d = img.createGraphics();
-        
+
         g2d.setColor(new Color(70, 74, 84));
         g2d.fillRect(0, 0, width, height);
-        
+
         g2d.setColor(Color.WHITE);
         g2d.setFont(new Font("SansSerif", Font.PLAIN, 10));
         FontMetrics fm = g2d.getFontMetrics();
+
         String text = "No Image";
         int textX = (width - fm.stringWidth(text)) / 2;
         int textY = (height - fm.getHeight()) / 2 + fm.getAscent();
+
         g2d.drawString(text, textX, textY);
-        
-        g2d.setColor(Color.WHITE);
         g2d.drawRect(0, 0, width - 1, height - 1);
-        
+
         g2d.dispose();
         return new ImageIcon(img);
     }
-    
+
     public static ImageIcon loadProductImage(String path, int width, int height) {
-        if (path == null || path.isBlank()) {
+        if (path == null || path.trim().isEmpty()) {
             return getScaledPlaceholder(width, height);
         }
-        
-        String fileName = new File(path).getName();
-        String cacheKey = fileName + "_" + width + "x" + height;
-        
+
+        String normalizedPath = path.trim().replace("\\", "/");
+        String fileName = new File(normalizedPath).getName();
+        String cacheKey = normalizedPath + "_" + width + "x" + height;
+
         if (imageCache.containsKey(cacheKey)) {
             return imageCache.get(cacheKey);
         }
-        
+
         try {
-            File imageFile = new File(IMAGES_DIR + fileName);
-            
-            if (imageFile.exists()) {
-                ImageIcon icon = new ImageIcon(imageFile.getAbsolutePath());
-                Image scaledImg = icon.getImage().getScaledInstance(width, height, Image.SCALE_SMOOTH);
-                ImageIcon scaledIcon = new ImageIcon(scaledImg);
-                imageCache.put(cacheKey, scaledIcon);
-                return scaledIcon;
+            File imageFile;
+
+            // 1. si le path exact existe, on l’utilise
+            File directFile = new File(normalizedPath);
+            if (directFile.exists()) {
+                imageFile = directFile;
             } else {
+                // 2. sinon on tente avec image/ + nom du fichier
+                imageFile = new File(IMAGES_DIR + fileName);
+            }
+
+            if (!imageFile.exists()) {
                 ImageIcon placeholder = getScaledPlaceholder(width, height);
                 imageCache.put(cacheKey, placeholder);
                 return placeholder;
             }
-            
+
+            ImageIcon icon = new ImageIcon(imageFile.getAbsolutePath());
+
+            // sécurité si l'image est invalide
+            if (icon.getIconWidth() <= 0 || icon.getIconHeight() <= 0) {
+                ImageIcon placeholder = getScaledPlaceholder(width, height);
+                imageCache.put(cacheKey, placeholder);
+                return placeholder;
+            }
+
+            Image scaledImg = icon.getImage().getScaledInstance(width, height, Image.SCALE_SMOOTH);
+            ImageIcon scaledIcon = new ImageIcon(scaledImg);
+            imageCache.put(cacheKey, scaledIcon);
+            return scaledIcon;
+
         } catch (Exception e) {
-            System.err.println("Erreur chargement image: " + fileName + " - " + e.getMessage());
+            System.err.println("Erreur chargement image: " + normalizedPath + " - " + e.getMessage());
             ImageIcon placeholder = getScaledPlaceholder(width, height);
             imageCache.put(cacheKey, placeholder);
             return placeholder;
         }
     }
-    
+
     private static ImageIcon getScaledPlaceholder(int width, int height) {
         String cacheKey = "placeholder_" + width + "x" + height;
+
         if (imageCache.containsKey(cacheKey)) {
             return imageCache.get(cacheKey);
         }
-        
+
         ImageIcon placeholder = createPlaceholderIcon(width, height);
         imageCache.put(cacheKey, placeholder);
         return placeholder;
     }
-    
+
     public static void clearCache() {
         imageCache.clear();
     }
 
-    // ============ CHAMP MOT DE PASSE AVEC ŒIL ============
-    
-    /**
-     * Crée un champ de mot de passe avec un œil pour montrer/masquer
-     */
     public static JPanel createPasswordFieldWithEye(String title) {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setOpaque(false);
-        
+
         JPasswordField passwordField = new JPasswordField();
-        passwordField.setBackground(new Color(58, 62, 74));
+        passwordField.setBackground(INPUT_BG);
         passwordField.setForeground(TEXT);
         passwordField.setCaretColor(TEXT);
         passwordField.setBorder(BorderFactory.createCompoundBorder(
@@ -125,38 +136,36 @@ public class UITheme {
                 new EmptyBorder(8, 10, 8, 10)
         ));
         passwordField.setFont(normalFont());
-        
-        // Bouton œil
+        passwordField.setEchoChar('•');
+
         JLabel eyeLabel = new JLabel("👁️");
         eyeLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
         eyeLabel.setForeground(MUTED);
         eyeLabel.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5));
-        
-        // Variable pour suivre l'état
+
         final boolean[] isVisible = {false};
-        
+
         eyeLabel.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
                 isVisible[0] = !isVisible[0];
+
                 if (isVisible[0]) {
-                    // Montrer le mot de passe
                     passwordField.setEchoChar((char) 0);
                     eyeLabel.setText("🙈");
                     eyeLabel.setForeground(GOLD);
                 } else {
-                    // Masquer le mot de passe
                     passwordField.setEchoChar('•');
                     eyeLabel.setText("👁️");
                     eyeLabel.setForeground(MUTED);
                 }
             }
-            
+
             @Override
             public void mouseEntered(MouseEvent e) {
                 eyeLabel.setForeground(GOLD);
             }
-            
+
             @Override
             public void mouseExited(MouseEvent e) {
                 if (!isVisible[0]) {
@@ -164,33 +173,28 @@ public class UITheme {
                 }
             }
         });
-        
-        // Panel pour le champ avec bordure titrée
+
         JPanel fieldPanel = new JPanel(new BorderLayout());
         fieldPanel.setOpaque(false);
         fieldPanel.setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(BORDER),
                 title
         ));
+
         fieldPanel.add(passwordField, BorderLayout.CENTER);
         fieldPanel.add(eyeLabel, BorderLayout.EAST);
-        
+
         panel.add(fieldPanel, BorderLayout.CENTER);
-        
-        // Stocker le champ pour pouvoir le récupérer plus tard
         panel.putClientProperty("passwordField", passwordField);
-        
+
         return panel;
     }
-    
-    /**
-     * Récupère le JPasswordField depuis le panel créé par createPasswordFieldWithEye
-     */
+
     public static JPasswordField getPasswordFieldFromPanel(JPanel panel) {
-        return (JPasswordField) panel.getClientProperty("passwordField");
+        Object field = panel.getClientProperty("passwordField");
+        return (field instanceof JPasswordField) ? (JPasswordField) field : null;
     }
 
-    // ============ FONTS ============
     public static Font titleFont() {
         return new Font("SansSerif", Font.BOLD, 28);
     }
@@ -206,25 +210,26 @@ public class UITheme {
     public static Font smallFont() {
         return new Font("SansSerif", Font.PLAIN, 12);
     }
-    
+
     public static Font priceFont() {
         return new Font("SansSerif", Font.BOLD, 18);
     }
 
-    // ============ BOUTONS ============
-    
     public static void addHoverEffect(JButton button, Color hoverColor) {
         Color originalColor = button.getBackground();
         button.addMouseListener(new MouseAdapter() {
+            @Override
             public void mouseEntered(MouseEvent evt) {
                 button.setBackground(hoverColor);
             }
+
+            @Override
             public void mouseExited(MouseEvent evt) {
                 button.setBackground(originalColor);
             }
         });
     }
-    
+
     public static JButton primaryButton(String text) {
         JButton b = new JButton(text);
         b.setBackground(GREEN);
@@ -260,7 +265,7 @@ public class UITheme {
         addHoverEffect(b, new Color(217, 96, 96));
         return b;
     }
-    
+
     public static JButton goldButton(String text) {
         JButton b = new JButton(text);
         b.setBackground(GOLD);
@@ -272,7 +277,7 @@ public class UITheme {
         addHoverEffect(b, new Color(255, 213, 67));
         return b;
     }
-    
+
     public static JButton iconButton(String text, Color bg) {
         JButton btn = new JButton(text);
         btn.setBackground(bg);
@@ -285,11 +290,9 @@ public class UITheme {
         return btn;
     }
 
-    // ============ CHAMPS DE TEXTE ============
-    
     public static JTextField textField() {
         JTextField field = new JTextField();
-        field.setBackground(new Color(58, 62, 74));
+        field.setBackground(INPUT_BG);
         field.setForeground(TEXT);
         field.setCaretColor(TEXT);
         field.setBorder(BorderFactory.createCompoundBorder(
@@ -302,7 +305,7 @@ public class UITheme {
 
     public static JPasswordField passwordField() {
         JPasswordField field = new JPasswordField();
-        field.setBackground(new Color(58, 62, 74));
+        field.setBackground(INPUT_BG);
         field.setForeground(TEXT);
         field.setCaretColor(TEXT);
         field.setBorder(BorderFactory.createCompoundBorder(
@@ -310,11 +313,10 @@ public class UITheme {
                 new EmptyBorder(8, 10, 8, 10)
         ));
         field.setFont(normalFont());
+        field.setEchoChar('•');
         return field;
     }
 
-    // ============ PANELS ============
-    
     public static JPanel darkPanel() {
         JPanel p = new JPanel();
         p.setBackground(BG);
@@ -331,8 +333,6 @@ public class UITheme {
         return p;
     }
 
-    // ============ LABELS ============
-    
     public static JLabel label(String text) {
         JLabel l = new JLabel(text);
         l.setForeground(TEXT);
@@ -346,14 +346,14 @@ public class UITheme {
         l.setFont(smallFont());
         return l;
     }
-    
+
     public static JLabel titleLabel(String text) {
         JLabel l = new JLabel(text);
         l.setForeground(TEXT);
         l.setFont(titleFont());
         return l;
     }
-    
+
     public static JLabel priceLabel(String text) {
         JLabel l = new JLabel(text);
         l.setForeground(GOLD);

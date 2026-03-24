@@ -1,62 +1,40 @@
-package e_commerce;
+package service;
+
+import dao.ProductDAO;
+import model.Product;
 
 import java.util.List;
 
 public class ProductService {
 
+    private final ProductDAO productDAO;
 
-	    private ProductDAO productDAO;
+    public ProductService() {
+        this.productDAO = new ProductDAO();
+    }
 
-	    public ProductService() {
-	        this.productDAO = new ProductDAO();
-	    }
+    public List<Product> getAllProducts() {
+        return productDAO.findAll();
+    }
 
-	    // 📌 Liste produits
-	    public List<Product> getAllProducts() {
-	        return productDAO.findAll();
-	    }
+    public Product getProductById(int id) {
+        return productDAO.findById(id);
+    }
 
-	    // 📌 Détail produit
-	    public Product getProductById(int id) {
-	        Product p = productDAO.findById(id);
+    // ✅ Nouveau
+    public Product getProductByName(String name) {
+        return productDAO.findByName(name);
+    }
 
-	        if (p == null) {
-	            throw new RuntimeException("Produit introuvable !");
-	        }
+    public boolean addProduct(Product product) {
+        return productDAO.save(product);
+    }
 
-	        return p;
-	    }
+    public boolean updateProduct(Product product) {
+        return productDAO.update(product);
+    }
 
-	    // 📌 Ajouter produit (admin)
-	    public void addProduct(Product product) {
-	        if (product.getName() == null || product.getName().isEmpty()) {
-	            throw new RuntimeException("Nom produit obligatoire !");
-	        }
-
-	        if (product.getPrice() <= 0) {
-	            throw new RuntimeException("Prix invalide !");
-	        }
-
-	        productDAO.save(product);
-	    }
-
-	    // 📌 Modifier produit
-	    public void updateProduct(Product product) {
-	        if (product.getIdProduct() <= 0) {
-	            throw new RuntimeException("ID produit invalide !");
-	        }
-
-	        productDAO.update(product);
-	    }
-
-	    // 📌 Supprimer produit
-	    public void deleteProduct(int id) {
-	        if (id <= 0) {
-	            throw new RuntimeException("ID invalide !");
-	        }
-
-	        productDAO.delete(id);
-	    }
-	}
-
-
+    public boolean deleteProduct(int id) {
+        return productDAO.delete(id);
+    }
+}

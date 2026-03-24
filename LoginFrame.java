@@ -18,6 +18,7 @@ public class LoginFrame extends JFrame {
     private JButton loginBtn;
     private JButton registerBtn;
     private JButton languageBtn;
+    private JPanel card;
 
     public LoginFrame(ClientSocketService clientService) {
         this.clientService = clientService;
@@ -31,15 +32,10 @@ public class LoginFrame extends JFrame {
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setResizable(false);
 
-        // Appliquer l'orientation pour l'arabe
-        if (LanguageManager.getCurrentLanguage() == LanguageManager.Language.ARABIC) {
-            setComponentOrientation(ComponentOrientation.RIGHT_TO_LEFT);
-        }
-
         JPanel root = UITheme.darkPanel();
         root.setLayout(new GridBagLayout());
 
-        JPanel card = UITheme.cardPanel();
+        card = UITheme.cardPanel();
         card.setPreferredSize(new Dimension(480, 550));
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
         card.setBorder(BorderFactory.createCompoundBorder(
@@ -63,8 +59,7 @@ public class LoginFrame extends JFrame {
         subtitle.setFont(new Font("SansSerif", Font.PLAIN, 13));
 
         emailField = createStyledTextField(LanguageManager.getInstance().getText("login.email"));
-        
-        // Champ mot de passe avec œil
+
         passwordPanel = UITheme.createPasswordFieldWithEye(LanguageManager.getInstance().getText("login.password"));
         passwordPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
         passwordPanel.setMaximumSize(new Dimension(340, 60));
@@ -84,10 +79,9 @@ public class LoginFrame extends JFrame {
         registerBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
         registerBtn.setMaximumSize(new Dimension(340, 48));
         registerBtn.setPreferredSize(new Dimension(340, 48));
-        
-        // Bouton langue
-        languageBtn = new JButton(LanguageManager.getCurrentLanguage().getFlag() + " " + 
-                                   LanguageManager.getCurrentLanguage().getDisplayName());
+
+        languageBtn = new JButton(LanguageManager.getCurrentLanguage().getFlag() + " " +
+                LanguageManager.getCurrentLanguage().getDisplayName());
         languageBtn.setBackground(UITheme.CARD);
         languageBtn.setForeground(Color.WHITE);
         languageBtn.setFont(new Font("SansSerif", Font.BOLD, 12));
@@ -95,15 +89,14 @@ public class LoginFrame extends JFrame {
         languageBtn.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15));
         languageBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
         languageBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
-        languageBtn.setMaximumSize(new Dimension(150, 35));
-        
+        languageBtn.setMaximumSize(new Dimension(170, 35));
+
         languageBtn.addActionListener(e -> {
             JPopupMenu langMenu = new JPopupMenu();
             for (LanguageManager.Language lang : LanguageManager.Language.values()) {
                 JMenuItem item = new JMenuItem(lang.getFlag() + " " + lang.getDisplayName());
                 item.addActionListener(ev -> {
                     LanguageManager.setLanguage(lang);
-                    languageBtn.setText(lang.getFlag() + " " + lang.getDisplayName());
                     refreshUI();
                 });
                 langMenu.add(item);
@@ -143,9 +136,6 @@ public class LoginFrame extends JFrame {
         JTextField field = UITheme.textField();
         field.setMaximumSize(new Dimension(340, 52));
         field.setPreferredSize(new Dimension(340, 52));
-        field.setBackground(new Color(58, 62, 74));
-        field.setForeground(Color.WHITE);
-        field.setCaretColor(Color.WHITE);
         field.setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(UITheme.BORDER),
                 title
@@ -188,29 +178,41 @@ public class LoginFrame extends JFrame {
             statusLabel.setText(LanguageManager.getInstance().getText("login.error.invalid"));
         }
     }
-    
+
     private void refreshUI() {
         setTitle(LanguageManager.getInstance().getText("login.title"));
         title.setText(LanguageManager.getInstance().getText("login.title"));
         subtitle.setText(LanguageManager.getInstance().getText("login.subtitle"));
-        
-        // Recréer les champs avec les nouveaux labels
+        languageBtn.setText(LanguageManager.getCurrentLanguage().getFlag() + " " +
+                LanguageManager.getCurrentLanguage().getDisplayName());
+
         emailField.setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(UITheme.BORDER),
                 LanguageManager.getInstance().getText("login.email")
         ));
-        
-        // Refaire le panel password avec le nouveau label
-        int index = ((JPanel)getContentPane()).getComponent(0) instanceof JPanel ? 0 : 0;
-        passwordPanel = UITheme.createPasswordFieldWithEye(LanguageManager.getInstance().getText("login.password"));
-        passwordPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        passwordPanel.setMaximumSize(new Dimension(340, 60));
-        passwordPanel.setPreferredSize(new Dimension(340, 60));
-        
+
+        JPanel newPasswordPanel = UITheme.createPasswordFieldWithEye(LanguageManager.getInstance().getText("login.password"));
+        newPasswordPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        newPasswordPanel.setMaximumSize(new Dimension(340, 60));
+        newPasswordPanel.setPreferredSize(new Dimension(340, 60));
+
+        int index = -1;
+        for (int i = 0; i < card.getComponentCount(); i++) {
+            if (card.getComponent(i) == passwordPanel) {
+                index = i;
+                break;
+            }
+        }
+        if (index != -1) {
+            card.remove(index);
+            passwordPanel = newPasswordPanel;
+            card.add(passwordPanel, index);
+        }
+
         loginBtn.setText("🔐 " + LanguageManager.getInstance().getText("login.button"));
         registerBtn.setText("📝 " + LanguageManager.getInstance().getText("login.register"));
-        
-        revalidate();
-        repaint();
+
+        card.revalidate();
+        card.repaint();
     }
 }

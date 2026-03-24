@@ -11,7 +11,7 @@ public class EditProfileFrame extends LanguageAwareFrame {
     private final ClientSocketService clientService;
     private final AppSession session;
     private final ProfileFrame parentFrame;
-    
+
     private JTextField nameField;
     private JTextField emailField;
     private JTextField phoneField;
@@ -54,10 +54,10 @@ public class EditProfileFrame extends LanguageAwareFrame {
 
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 0));
         buttonPanel.setOpaque(false);
-        
+
         JButton saveBtn = UITheme.primaryButton("💾 " + LanguageManager.getInstance().getText("profile.save"));
         JButton cancelBtn = UITheme.blueButton("✖ " + LanguageManager.getInstance().getText("profile.cancel"));
-        
+
         saveBtn.addActionListener(e -> saveProfile());
         cancelBtn.addActionListener(e -> dispose());
 
@@ -81,7 +81,7 @@ public class EditProfileFrame extends LanguageAwareFrame {
         root.add(card);
         setContentPane(root);
     }
-    
+
     private JTextField createStyledTextField(String title) {
         JTextField field = UITheme.textField();
         field.setMaximumSize(new Dimension(340, 45));
@@ -92,49 +92,74 @@ public class EditProfileFrame extends LanguageAwareFrame {
         ));
         return field;
     }
-    
+
     private void loadUserData() {
-        // Simulation - À remplacer par l'appel serveur réel
-        nameField.setText("Jean Dupont");
-        emailField.setText("jean.dupont@email.com");
-        phoneField.setText("0612345678");
-        addressField.setText("123 Rue Example");
-        cityField.setText("Casablanca");
+        String response = clientService.getProfile(session.getClientId());
+
+        if (response == null || response.startsWith("ERROR") || !response.startsWith("PROFILE_DATA:")) {
+            nameField.setText("Client #" + session.getClientId());
+            emailField.setText("");
+            phoneField.setText("");
+            addressField.setText("");
+            cityField.setText("");
+            return;
+        }
+
+        String data = response.substring("PROFILE_DATA:".length());
+        String[] parts = data.split(";");
+
+        nameField.setText(parts.length > 0 ? parts[0] : "");
+        emailField.setText(parts.length > 1 ? parts[1] : "");
+        phoneField.setText(parts.length > 2 ? parts[2] : "");
+        addressField.setText(parts.length > 3 ? parts[3] : "");
+        cityField.setText(parts.length > 4 ? parts[4] : "");
     }
-    
+
     private void saveProfile() {
         String name = nameField.getText().trim();
         String email = emailField.getText().trim();
         String phone = phoneField.getText().trim();
         String address = addressField.getText().trim();
         String city = cityField.getText().trim();
-        
+
         if (name.isEmpty() || email.isEmpty()) {
-            JOptionPane.showMessageDialog(this, 
-                LanguageManager.getInstance().getText("register.error.empty"), 
-                "Erreur", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this,
+                    LanguageManager.getInstance().getText("register.error.empty"),
+                    "Erreur", JOptionPane.ERROR_MESSAGE);
             return;
         }
-        
-        // Simulation - À remplacer par l'appel serveur réel
-        // String response = clientService.updateProfile(session.getClientId(), name, email, phone, address, city);
-        
-        JOptionPane.showMessageDialog(this, 
-            LanguageManager.getInstance().getText("profile.update.success"), 
-            LanguageManager.getInstance().getText("profile.update.success"), 
-            JOptionPane.INFORMATION_MESSAGE);
-        
-        if (parentFrame != null) {
-            parentFrame.refreshProfile();
+
+        String response = clientService.updateProfile(
+                session.getClientId(),
+                name,
+                email,
+                phone,
+                address,
+                city
+        );
+
+        if ("UPDATE_PROFILE_SUCCESS".equals(response)) {
+            JOptionPane.showMessageDialog(this,
+                    LanguageManager.getInstance().getText("profile.update.success"),
+                    LanguageManager.getInstance().getText("profile.update.success"),
+                    JOptionPane.INFORMATION_MESSAGE);
+
+            if (parentFrame != null) {
+                parentFrame.refreshProfile();
+            }
+            dispose();
+        } else {
+            JOptionPane.showMessageDialog(this,
+                    LanguageManager.getInstance().getText("profile.update.error") + "\n" + response,
+                    "Erreur", JOptionPane.ERROR_MESSAGE);
         }
-        dispose();
     }
-    
+
     @Override
     public void refreshTexts() {
         setTitle(LanguageManager.getInstance().getText("profile.edit.title"));
         titleLabel.setText("✏️ " + LanguageManager.getInstance().getText("profile.edit.title"));
-        
+
         nameField.setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(UITheme.BORDER),
                 LanguageManager.getInstance().getText("profile.name")
@@ -155,7 +180,7 @@ public class EditProfileFrame extends LanguageAwareFrame {
                 BorderFactory.createLineBorder(UITheme.BORDER),
                 LanguageManager.getInstance().getText("profile.city")
         ));
-        
+
         revalidate();
         repaint();
     }

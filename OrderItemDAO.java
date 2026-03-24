@@ -1,8 +1,9 @@
-package e_commerce;
+package dao;
 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import model.OrderItem;
 
 public class OrderItemDAO {
 

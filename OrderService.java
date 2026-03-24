@@ -1,68 +1,54 @@
-package e_commerce;
+package service;
 
-import java.time.LocalDateTime;
+import dao.OrderDAO;
+import model.CartItem;
+import model.Order;
+import model.OrderItem;
+
+import java.sql.SQLException;
 import java.util.List;
 import java.util.UUID;
 
 public class OrderService {
 
-    private OrderDAO orderDAO;
+    private final OrderDAO orderDAO;
 
-    public OrderService() throws Exception {
+    public OrderService() throws SQLException {
         this.orderDAO = new OrderDAO();
     }
 
-    /**
-     * Valide une commande : 
-     * - transforme les CartItems en OrderItems
-     * - calcule le total
-     * - génère UUID et date
-     * - enregistre en DB
-     */
-    public Order validateOrder(int clientId, List<CartItem> cartItems) throws Exception {
-
-        if (cartItems == null || cartItems.isEmpty()) {
-            throw new RuntimeException("Panier vide !");
-        }
-
-        double total = 0;
-        Order order = new Order(); // ✅ constructeur vide
-
-        // 🔄 transformation panier → commande
-        for (CartItem c : cartItems) {
-            total += c.calculateSubtotal(); // calcule price * quantity
-
-            OrderItem oi = new OrderItem();
-            oi.setProductId(c.getProduct().getIdProduct());
-            oi.setQuantity(c.getQuantity());
-            oi.setPrice(c.getProduct().getPrice());
-
-            order.getItems().add(oi);
-        }
-
-        // 🔹 UUID + total + statut + date
+    public Order createOrder(int clientId, List<CartItem> cartItems) throws SQLException {
+        Order order = new Order(0);
         order.setOrderUUID(UUID.randomUUID().toString());
-        order.setTotalPrice(total);
-        order.setStatus("CREATED");
-        order.setCreatedAt(LocalDateTime.now());
+        order.setStatus("pending");
 
-        // 💾 sauvegarde en DB via DAO
+        for (CartItem c : cartItems) {
+            OrderItem oi = new OrderItem();
+            oi.setProduct(c.getProduct());
+            oi.setQuantity(c.getQuantity());
+            oi.setUnitPrice(c.getProduct().getPrice());
+            order.ajouterItem(oi);
+        }
+
         orderDAO.save(order, clientId);
-
         return order;
     }
 
-    /**
-     * Récupère l'historique des commandes d’un client
-     */
-    public List<Order> getOrdersByClient(int clientId) throws Exception {
+    public Order getOrderByUUID(String uuid) throws SQLException {
+        return orderDAO.findByUUID(uuid);
+    }
+
+    public void updateStatus(int orderId, String newStatus) throws SQLException {
+        orderDAO.updateStatus(orderId, newStatus);
+    }
+
+    // ✅ utile pour historique client
+    public List<Order> getOrdersByClient(int clientId) throws SQLException {
         return orderDAO.findByClient(clientId);
     }
 
-    /**
-     * Met à jour le statut d’une commande
-     */
-    public void updateOrderStatus(int orderId, String newStatus) throws Exception {
-        orderDAO.updateStatus(orderId, newStatus);
+    // ✅ utile pour admin
+    public List<Order> getAllOrders() throws SQLException {
+        return orderDAO.findAll();
     }
 }

@@ -3,6 +3,7 @@ package model;
 import java.time.LocalDateTime;
 
 public class Payment {
+
     private int id;
     private int orderId;
     private String method;
@@ -28,7 +29,7 @@ public class Payment {
 
     public void setId(int id) {
         this.id = id;
-    }
+    } 
 
     public int getOrderId() {
         return orderId;
@@ -36,17 +37,24 @@ public class Payment {
 
     public void setOrderId(int orderId) {
         this.orderId = orderId;
-    }
+    } 
 
     public String getMethod() {
         return method;
     }
 
     public void setMethod(String method) {
-        if (!method.equalsIgnoreCase("card") && !method.equalsIgnoreCase("especes")) {
+        if (method == null) {
             throw new IllegalArgumentException("Méthode invalide.");
         }
-        this.method = method.toLowerCase();
+
+        String normalized = method.toLowerCase();
+
+        if (!normalized.equals("card") && !normalized.equals("especes")) {
+            throw new IllegalArgumentException("Méthode invalide.");
+        }
+
+        this.method = normalized;
     }
 
     public double getAmount() {
@@ -65,12 +73,19 @@ public class Payment {
     }
 
     public void setStatus(String status) {
-        if (!status.equalsIgnoreCase("pending")
-                && !status.equalsIgnoreCase("success")
-                && !status.equalsIgnoreCase("failed")) {
+        if (status == null) {
             throw new IllegalArgumentException("Statut invalide.");
         }
-        this.status = status.toLowerCase();
+
+        String normalized = status.toLowerCase();
+
+        if (!normalized.equals("pending")
+                && !normalized.equals("success")
+                && !normalized.equals("failed")) {
+            throw new IllegalArgumentException("Statut invalide.");
+        }
+
+        this.status = normalized;
     }
 
     public LocalDateTime getPaidAt() {
@@ -91,6 +106,7 @@ public class Payment {
             status = "failed";
             return false;
         }
+
         status = "success";
         paidAt = LocalDateTime.now();
         return true;

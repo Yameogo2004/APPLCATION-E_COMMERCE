@@ -14,8 +14,8 @@ public class RegisterFrame extends JFrame {
     private JTextField nomField;
     private JTextField prenomField;
     private JTextField emailField;
-    private JPanel passwordPanel;      // Panel pour mot de passe
-    private JPanel confirmPasswordPanel; // Panel pour confirmation
+    private JPanel passwordPanel;
+    private JPanel confirmPasswordPanel;
     private JTextField addressField;
     private JTextField phoneField;
     private JTextField villeField;
@@ -58,19 +58,17 @@ public class RegisterFrame extends JFrame {
         nomField = createStyledTextField("👤 Nom");
         prenomField = createStyledTextField("👤 Prénom");
         emailField = createStyledTextField("📧 Email");
-        
-        // Champ mot de passe avec œil
+
         passwordPanel = UITheme.createPasswordFieldWithEye("🔒 Mot de passe");
         passwordPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
         passwordPanel.setMaximumSize(new Dimension(340, 60));
         passwordPanel.setPreferredSize(new Dimension(340, 60));
-        
-        // Champ confirmation mot de passe avec œil
+
         confirmPasswordPanel = UITheme.createPasswordFieldWithEye("🔒 Confirmer le mot de passe");
         confirmPasswordPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
         confirmPasswordPanel.setMaximumSize(new Dimension(340, 60));
         confirmPasswordPanel.setPreferredSize(new Dimension(340, 60));
-        
+
         addressField = createStyledTextField("🏠 Adresse");
         phoneField = createStyledTextField("📱 Téléphone");
         villeField = createStyledTextField("🏙️ Ville");
@@ -130,9 +128,6 @@ public class RegisterFrame extends JFrame {
         JTextField field = UITheme.textField();
         field.setMaximumSize(new Dimension(340, 48));
         field.setPreferredSize(new Dimension(340, 48));
-        field.setBackground(new Color(58, 62, 74));
-        field.setForeground(Color.WHITE);
-        field.setCaretColor(Color.WHITE);
         field.setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(UITheme.BORDER),
                 title
@@ -144,40 +139,35 @@ public class RegisterFrame extends JFrame {
         String nom = nomField.getText().trim();
         String prenom = prenomField.getText().trim();
         String email = emailField.getText().trim();
-        
+
         JPasswordField passwordField = UITheme.getPasswordFieldFromPanel(passwordPanel);
         JPasswordField confirmPasswordField = UITheme.getPasswordFieldFromPanel(confirmPasswordPanel);
-        
+
         String password = new String(passwordField.getPassword()).trim();
         String confirmPassword = new String(confirmPasswordField.getPassword()).trim();
-        
+
         String address = addressField.getText().trim();
         String phone = phoneField.getText().trim();
         String ville = villeField.getText().trim();
 
-        // Validation des champs
         if (nom.isEmpty() || prenom.isEmpty() || email.isEmpty() || password.isEmpty()
                 || address.isEmpty() || phone.isEmpty() || ville.isEmpty()) {
             statusLabel.setText("Veuillez remplir tous les champs.");
             return;
         }
-        
-        // Validation de l'email (simple)
+
         if (!email.contains("@") || !email.contains(".")) {
             statusLabel.setText("Email invalide.");
             return;
         }
-        
-        // Validation du mot de passe (au moins 6 caractères)
+
         if (password.length() < 6) {
             statusLabel.setText("Le mot de passe doit contenir au moins 6 caractères.");
             return;
         }
-        
-        // Vérification que les mots de passe correspondent
+
         if (!password.equals(confirmPassword)) {
             statusLabel.setText("Les mots de passe ne correspondent pas.");
-            // Effacer les champs de mot de passe
             passwordField.setText("");
             confirmPasswordField.setText("");
             return;
@@ -193,9 +183,9 @@ public class RegisterFrame extends JFrame {
         );
 
         if ("REGISTER_SUCCESS".equals(response)) {
-            JOptionPane.showMessageDialog(this, 
-                "✅ Inscription réussie !\nVous pouvez maintenant vous connecter.", 
-                "Succès", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(this,
+                    "✅ Inscription réussie !\nVous pouvez maintenant vous connecter.",
+                    "Succès", JOptionPane.INFORMATION_MESSAGE);
             backFrame.setVisible(true);
             dispose();
         } else {

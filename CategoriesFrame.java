@@ -24,7 +24,7 @@ public class CategoriesFrame extends JFrame {
         DefaultListModel<String> model = new DefaultListModel<>();
         model.addElement("🏠 Tous les produits");
         for (String c : categories) {
-            if (!c.equals("General") && !c.isEmpty()) {
+            if (!c.equalsIgnoreCase("General") && !c.equalsIgnoreCase("Toutes") && !c.equalsIgnoreCase("Tous") && !c.isEmpty()) {
                 model.addElement(getIconForCategory(c) + " " + c);
             }
         }
@@ -36,22 +36,11 @@ public class CategoriesFrame extends JFrame {
         list.setSelectionForeground(Color.WHITE);
         list.setFont(UITheme.normalFont());
         list.setFixedCellHeight(40);
-        
-        // Double-clic pour sélectionner
+
         list.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 if (evt.getClickCount() == 2) {
-                    String selected = list.getSelectedValue();
-                    if (selected != null && onCategorySelected != null) {
-                        String categoryName = selected.contains(" ") ? 
-                            selected.substring(selected.indexOf(" ") + 1) : selected;
-                        if (categoryName.equals("Tous les produits")) {
-                            onCategorySelected.accept("Tous");
-                        } else {
-                            onCategorySelected.accept(categoryName);
-                        }
-                        dispose();
-                    }
+                    selectCategory(list, onCategorySelected);
                 }
             }
         });
@@ -67,20 +56,7 @@ public class CategoriesFrame extends JFrame {
         bottom.add(chooseBtn);
         bottom.add(closeBtn);
 
-        chooseBtn.addActionListener(e -> {
-            String selected = list.getSelectedValue();
-            if (selected != null && onCategorySelected != null) {
-                String categoryName = selected.contains(" ") ? 
-                    selected.substring(selected.indexOf(" ") + 1) : selected;
-                if (categoryName.equals("Tous les produits")) {
-                    onCategorySelected.accept("Tous");
-                } else {
-                    onCategorySelected.accept(categoryName);
-                }
-                dispose();
-            }
-        });
-
+        chooseBtn.addActionListener(e -> selectCategory(list, onCategorySelected));
         closeBtn.addActionListener(e -> dispose());
 
         root.add(title, BorderLayout.NORTH);
@@ -89,7 +65,23 @@ public class CategoriesFrame extends JFrame {
 
         setContentPane(root);
     }
-    
+
+    private void selectCategory(JList<String> list, Consumer<String> onCategorySelected) {
+        String selected = list.getSelectedValue();
+        if (selected != null && onCategorySelected != null) {
+            String categoryName = selected.contains(" ")
+                    ? selected.substring(selected.indexOf(" ") + 1)
+                    : selected;
+
+            if (categoryName.equals("Tous les produits")) {
+                onCategorySelected.accept("Toutes");
+            } else {
+                onCategorySelected.accept(categoryName);
+            }
+            dispose();
+        }
+    }
+
     private String getIconForCategory(String category) {
         String catLower = category.toLowerCase();
         if (catLower.contains("tablette")) return "📱";

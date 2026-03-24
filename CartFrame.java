@@ -6,8 +6,6 @@ import Client.ClientSocketService;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,8 +22,8 @@ public class CartFrame extends LanguageAwareFrame {
     private JButton clearAllBtn;
     private JButton backBtn;
     private JLabel titleLabel;
-    
-    private List<CartProductInfo> cartProducts = new ArrayList<>();
+
+    private final List<CartProductInfo> cartProducts = new ArrayList<>();
 
     public CartFrame(ClientSocketService clientService, AppSession session, JFrame backFrame) {
         this.clientService = clientService;
@@ -47,19 +45,18 @@ public class CartFrame extends LanguageAwareFrame {
 
         JPanel top = UITheme.cardPanel();
         top.setLayout(new BorderLayout());
-        
+
         titleLabel = new JLabel("🛒 " + LanguageManager.getInstance().getText("cart.title"));
         titleLabel.setForeground(Color.WHITE);
         titleLabel.setFont(new Font("SansSerif", Font.BOLD, 24));
-        
         top.add(titleLabel, BorderLayout.WEST);
 
         model = new DefaultTableModel(new Object[]{
-            LanguageManager.getInstance().getText("cart.product"),
-            LanguageManager.getInstance().getText("cart.quantity"),
-            LanguageManager.getInstance().getText("cart.unit.price"),
-            LanguageManager.getInstance().getText("cart.subtotal"),
-            LanguageManager.getInstance().getText("cart.remove")
+                LanguageManager.getInstance().getText("cart.product"),
+                LanguageManager.getInstance().getText("cart.quantity"),
+                LanguageManager.getInstance().getText("cart.unit.price"),
+                LanguageManager.getInstance().getText("cart.subtotal"),
+                LanguageManager.getInstance().getText("cart.remove")
         }, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -76,16 +73,10 @@ public class CartFrame extends LanguageAwareFrame {
         table.getTableHeader().setForeground(Color.WHITE);
         table.getTableHeader().setFont(new Font("SansSerif", Font.BOLD, 13));
         table.setSelectionBackground(new Color(67, 139, 208));
-        
+
         table.getColumn(LanguageManager.getInstance().getText("cart.remove")).setCellRenderer(new ButtonRenderer());
         table.getColumn(LanguageManager.getInstance().getText("cart.remove")).setCellEditor(new ButtonEditor());
-        
-        table.getColumnModel().getColumn(0).setPreferredWidth(250);
-        table.getColumnModel().getColumn(1).setPreferredWidth(80);
-        table.getColumnModel().getColumn(2).setPreferredWidth(100);
-        table.getColumnModel().getColumn(3).setPreferredWidth(100);
-        table.getColumnModel().getColumn(4).setPreferredWidth(80);
-        
+
         JScrollPane scroll = new JScrollPane(table);
         scroll.setBorder(BorderFactory.createLineBorder(UITheme.BORDER));
 
@@ -103,10 +94,6 @@ public class CartFrame extends LanguageAwareFrame {
         clearAllBtn = UITheme.dangerButton("🗑️ " + LanguageManager.getInstance().getText("cart.clear"));
         backBtn = UITheme.blueButton("← " + LanguageManager.getInstance().getText("cart.back"));
 
-        checkoutBtn.setFont(new Font("SansSerif", Font.BOLD, 14));
-        clearAllBtn.setFont(new Font("SansSerif", Font.BOLD, 14));
-        backBtn.setFont(new Font("SansSerif", Font.BOLD, 14));
-
         buttons.add(backBtn);
         buttons.add(clearAllBtn);
         buttons.add(checkoutBtn);
@@ -121,9 +108,9 @@ public class CartFrame extends LanguageAwareFrame {
         setContentPane(root);
 
         clearAllBtn.addActionListener(e -> {
-            int confirm = JOptionPane.showConfirmDialog(this, 
-                LanguageManager.getInstance().getText("cart.clear.confirm"), 
-                "Confirmation", JOptionPane.YES_NO_OPTION);
+            int confirm = JOptionPane.showConfirmDialog(this,
+                    LanguageManager.getInstance().getText("cart.clear.confirm"),
+                    "Confirmation", JOptionPane.YES_NO_OPTION);
             if (confirm == JOptionPane.YES_OPTION) {
                 String res = clientService.clearCart(session.getClientId());
                 if ("CART_CLEAR_SUCCESS".equals(res)) {
@@ -168,56 +155,58 @@ public class CartFrame extends LanguageAwareFrame {
             for (String part : parts) {
                 if (part.startsWith("Total=")) {
                     total = part.substring("Total=".length());
-                } else if (part.startsWith("Product=")) {
-                    String product = extract(part, "Product=", ",Qty=");
+                } else if (part.startsWith("ProductId=")) {
+                    int productId = Integer.parseInt(extract(part, "ProductId=", ",Product="));
+                    String product = extract(part, ",Product=", ",Qty=");
                     String qty = extract(part, ",Qty=", ",Subtotal=");
                     String subtotal = part.substring(part.indexOf(",Subtotal=") + 10);
-                    
+
                     double sub = Double.parseDouble(subtotal);
                     int qt = Integer.parseInt(qty);
-                    double unitPrice = sub / qt;
-                    
-                    cartProducts.add(new CartProductInfo(product, qt, unitPrice, sub));
-                    
-                    model.addRow(new Object[]{product, qt, String.format("%.2f DH", unitPrice), 
-                                              String.format("%.2f DH", sub), "🗑️ " + LanguageManager.getInstance().getText("cart.remove")});
+                    double unitPrice = qt > 0 ? sub / qt : 0;
+
+                    cartProducts.add(new CartProductInfo(productId, product, qt, unitPrice, sub));
+
+                    model.addRow(new Object[]{
+                            product,
+                            qt,
+                            String.format("%.2f DH", unitPrice),
+                            String.format("%.2f DH", sub),
+                            "🗑️ " + LanguageManager.getInstance().getText("cart.remove")
+                    });
                 }
             }
 
             totalLabel.setText(String.format("💰 " + LanguageManager.getInstance().getText("cart.total") + ": %s DH", total));
-            
+
             if (model.getRowCount() == 0) {
                 model.addRow(new Object[]{LanguageManager.getInstance().getText("cart.empty"), "", "", "", ""});
             }
         });
     }
-    
+
     private void removeItemFromCart(int row) {
         if (row >= 0 && row < cartProducts.size()) {
             CartProductInfo product = cartProducts.get(row);
-            
-            int confirm = JOptionPane.showConfirmDialog(this, 
-                LanguageManager.getInstance().getText("cart.remove.confirm") + " \"" + product.name + "\" ?", 
-                "Confirmation", JOptionPane.YES_NO_OPTION);
-            
+
+            int confirm = JOptionPane.showConfirmDialog(this,
+                    LanguageManager.getInstance().getText("cart.remove.confirm") + " \"" + product.name + "\" ?",
+                    "Confirmation", JOptionPane.YES_NO_OPTION);
+
             if (confirm == JOptionPane.YES_OPTION) {
-                table.getColumn(LanguageManager.getInstance().getText("cart.remove")).setCellEditor(null);
-                
-                String response = clientService.removeFromCartByName(session.getClientId(), product.name);
-                
+                String response = clientService.removeFromCart(session.getClientId(), product.productId);
+
                 if ("CART_REMOVE_SUCCESS".equals(response)) {
-                    JOptionPane.showMessageDialog(this, product.name + " " + LanguageManager.getInstance().getText("cart.remove").toLowerCase() + "é.");
+                    JOptionPane.showMessageDialog(this, product.name + " supprimé.");
                     loadCart();
                     refreshParentCartCount();
                 } else {
                     JOptionPane.showMessageDialog(this, "Erreur: " + response);
                 }
-                
-                table.getColumn(LanguageManager.getInstance().getText("cart.remove")).setCellEditor(new ButtonEditor());
             }
         }
     }
-    
+
     private void refreshParentCartCount() {
         if (backFrame instanceof ShopFrame) {
             ((ShopFrame) backFrame).refreshCartCount();
@@ -236,7 +225,7 @@ public class CartFrame extends LanguageAwareFrame {
             JOptionPane.showMessageDialog(this, LanguageManager.getInstance().getText("cart.empty"));
             return;
         }
-        
+
         String response = clientService.checkout(session.getClientId());
 
         if (response == null || response.startsWith("ERROR")) {
@@ -255,47 +244,45 @@ public class CartFrame extends LanguageAwareFrame {
             JOptionPane.showMessageDialog(this, "Erreur lors de la validation de la commande.");
         }
     }
-    
+
     @Override
     public void refreshTexts() {
         setTitle(LanguageManager.getInstance().getText("cart.title"));
         titleLabel.setText("🛒 " + LanguageManager.getInstance().getText("cart.title"));
-        
-        // Mettre à jour les colonnes du tableau
+
         model.setColumnIdentifiers(new Object[]{
-            LanguageManager.getInstance().getText("cart.product"),
-            LanguageManager.getInstance().getText("cart.quantity"),
-            LanguageManager.getInstance().getText("cart.unit.price"),
-            LanguageManager.getInstance().getText("cart.subtotal"),
-            LanguageManager.getInstance().getText("cart.remove")
+                LanguageManager.getInstance().getText("cart.product"),
+                LanguageManager.getInstance().getText("cart.quantity"),
+                LanguageManager.getInstance().getText("cart.unit.price"),
+                LanguageManager.getInstance().getText("cart.subtotal"),
+                LanguageManager.getInstance().getText("cart.remove")
         });
-        
+
         checkoutBtn.setText("💳 " + LanguageManager.getInstance().getText("cart.checkout"));
         clearAllBtn.setText("🗑️ " + LanguageManager.getInstance().getText("cart.clear"));
         backBtn.setText("← " + LanguageManager.getInstance().getText("cart.back"));
-        totalLabel.setText("💰 " + LanguageManager.getInstance().getText("cart.total") + ": " + totalLabel.getText().split(":")[1]);
-        
-        // Recharger le panier pour mettre à jour les textes
+
         loadCart();
-        
         revalidate();
         repaint();
     }
-    
-    class CartProductInfo {
+
+    static class CartProductInfo {
+        int productId;
         String name;
         int quantity;
         double unitPrice;
         double subtotal;
-        
-        CartProductInfo(String name, int quantity, double unitPrice, double subtotal) {
+
+        CartProductInfo(int productId, String name, int quantity, double unitPrice, double subtotal) {
+            this.productId = productId;
             this.name = name;
             this.quantity = quantity;
             this.unitPrice = unitPrice;
             this.subtotal = subtotal;
         }
     }
-    
+
     class ButtonRenderer extends JButton implements javax.swing.table.TableCellRenderer {
         public ButtonRenderer() {
             setOpaque(true);
@@ -304,19 +291,19 @@ public class CartFrame extends LanguageAwareFrame {
             setFont(new Font("SansSerif", Font.BOLD, 12));
             setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
         }
-        
+
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value,
-                boolean isSelected, boolean hasFocus, int row, int column) {
+                                                       boolean isSelected, boolean hasFocus, int row, int column) {
             setText((value == null) ? LanguageManager.getInstance().getText("cart.remove") : value.toString());
             return this;
         }
     }
-    
+
     class ButtonEditor extends AbstractCellEditor implements javax.swing.table.TableCellEditor {
-        private JButton button;
+        private final JButton button;
         private int selectedRow;
-        
+
         public ButtonEditor() {
             button = new JButton();
             button.setOpaque(true);
@@ -324,26 +311,20 @@ public class CartFrame extends LanguageAwareFrame {
             button.setForeground(Color.WHITE);
             button.setFont(new Font("SansSerif", Font.BOLD, 12));
             button.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
-            button.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent e) {
-                    fireEditingStopped();
-                }
-            });
+            button.addActionListener(e -> fireEditingStopped());
         }
-        
+
         @Override
         public Component getTableCellEditorComponent(JTable table, Object value,
-                boolean isSelected, int row, int column) {
+                                                     boolean isSelected, int row, int column) {
             selectedRow = row;
             button.setText((value == null) ? LanguageManager.getInstance().getText("cart.remove") : value.toString());
             return button;
         }
-        
+
         @Override
         public Object getCellEditorValue() {
-            SwingUtilities.invokeLater(() -> {
-                removeItemFromCart(selectedRow);
-            });
+            SwingUtilities.invokeLater(() -> removeItemFromCart(selectedRow));
             return LanguageManager.getInstance().getText("cart.remove");
         }
     }

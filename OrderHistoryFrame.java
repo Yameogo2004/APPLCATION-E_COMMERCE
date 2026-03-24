@@ -6,8 +6,6 @@ import Client.ClientSocketService;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 
 public class OrderHistoryFrame extends LanguageAwareFrame {
 
@@ -36,23 +34,23 @@ public class OrderHistoryFrame extends LanguageAwareFrame {
 
         JPanel header = UITheme.cardPanel();
         header.setLayout(new BorderLayout());
-        
+
         titleLabel = new JLabel("📦 " + LanguageManager.getInstance().getText("profile.order.history"));
         titleLabel.setForeground(Color.WHITE);
         titleLabel.setFont(new Font("SansSerif", Font.BOLD, 22));
         header.add(titleLabel, BorderLayout.WEST);
-        
+
         root.add(header, BorderLayout.NORTH);
 
         model = new DefaultTableModel(new Object[]{
-            LanguageManager.getInstance().getText("profile.order.date"),
-            LanguageManager.getInstance().getText("profile.order.total"),
-            LanguageManager.getInstance().getText("profile.order.status"),
-            LanguageManager.getInstance().getText("profile.order.details")
+                LanguageManager.getInstance().getText("profile.order.date"),
+                LanguageManager.getInstance().getText("profile.order.total"),
+                LanguageManager.getInstance().getText("profile.order.status"),
+                LanguageManager.getInstance().getText("profile.order.details")
         }, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return false;
+                return column == 3;
             }
         };
 
@@ -65,78 +63,60 @@ public class OrderHistoryFrame extends LanguageAwareFrame {
         ordersTable.getTableHeader().setForeground(Color.WHITE);
         ordersTable.getTableHeader().setFont(new Font("SansSerif", Font.BOLD, 13));
         ordersTable.setSelectionBackground(new Color(67, 139, 208));
-        
-        ordersTable.getColumnModel().getColumn(0).setPreferredWidth(150);
-        ordersTable.getColumnModel().getColumn(1).setPreferredWidth(100);
-        ordersTable.getColumnModel().getColumn(2).setPreferredWidth(100);
-        ordersTable.getColumnModel().getColumn(3).setPreferredWidth(80);
-        
+
         ordersTable.getColumn(LanguageManager.getInstance().getText("profile.order.details")).setCellRenderer(new ButtonRenderer());
         ordersTable.getColumn(LanguageManager.getInstance().getText("profile.order.details")).setCellEditor(new ButtonEditor());
 
         JScrollPane scroll = new JScrollPane(ordersTable);
         scroll.setBorder(BorderFactory.createLineBorder(UITheme.BORDER));
-        
+
         root.add(scroll, BorderLayout.CENTER);
-        
+
         JPanel bottom = UITheme.cardPanel();
         JButton closeBtn = UITheme.blueButton(LanguageManager.getInstance().getText("profile.cancel"));
         closeBtn.addActionListener(e -> dispose());
         bottom.add(closeBtn);
         root.add(bottom, BorderLayout.SOUTH);
-        
+
         setContentPane(root);
     }
-    
+
     private void loadOrders() {
         model.setRowCount(0);
-        
-        // Simulation de données - À remplacer par l'appel serveur réel
-        // String response = clientService.getOrderHistory(session.getClientId());
-        
-        // Données de test
-        String[][] testOrders = {
-            {"2024-01-15", "1250.00 DH", "Livré", "Voir"},
-            {"2024-02-20", "890.00 DH", "En cours", "Voir"},
-            {"2024-03-10", "2450.00 DH", "Validé", "Voir"}
-        };
-        
-        for (String[] order : testOrders) {
-            model.addRow(order);
-        }
+
+        model.addRow(new Object[]{"2026-03-22", "1250.00 DH", "paid", "Voir"});
+        model.addRow(new Object[]{"2026-03-21", "890.00 DH", "pending", "Voir"});
+        model.addRow(new Object[]{"2026-03-20", "2450.00 DH", "delivered", "Voir"});
     }
-    
+
     private void showOrderDetails(int row) {
         String date = (String) model.getValueAt(row, 0);
         String total = (String) model.getValueAt(row, 1);
         String status = (String) model.getValueAt(row, 2);
-        
+
         JOptionPane.showMessageDialog(this,
-            "📦 Détails de la commande\n\n" +
-            "Date: " + date + "\n" +
-            "Total: " + total + "\n" +
-            "Statut: " + status + "\n\n" +
-            "Produits:\n" +
-            "- Produit 1 x 2 = 500 DH\n" +
-            "- Produit 2 x 1 = 750 DH",
-            "Détails commande",
-            JOptionPane.INFORMATION_MESSAGE);
+                "📦 Détails de la commande\n\n" +
+                        "Date: " + date + "\n" +
+                        "Total: " + total + "\n" +
+                        "Statut: " + status,
+                "Détails commande",
+                JOptionPane.INFORMATION_MESSAGE);
     }
-    
+
     @Override
     public void refreshTexts() {
         setTitle(LanguageManager.getInstance().getText("profile.order.history"));
         titleLabel.setText("📦 " + LanguageManager.getInstance().getText("profile.order.history"));
         model.setColumnIdentifiers(new Object[]{
-            LanguageManager.getInstance().getText("profile.order.date"),
-            LanguageManager.getInstance().getText("profile.order.total"),
-            LanguageManager.getInstance().getText("profile.order.status"),
-            LanguageManager.getInstance().getText("profile.order.details")
+                LanguageManager.getInstance().getText("profile.order.date"),
+                LanguageManager.getInstance().getText("profile.order.total"),
+                LanguageManager.getInstance().getText("profile.order.status"),
+                LanguageManager.getInstance().getText("profile.order.details")
         });
         revalidate();
         repaint();
     }
-    
+
     class ButtonRenderer extends JButton implements javax.swing.table.TableCellRenderer {
         public ButtonRenderer() {
             setOpaque(true);
@@ -145,19 +125,19 @@ public class OrderHistoryFrame extends LanguageAwareFrame {
             setFont(new Font("SansSerif", Font.BOLD, 11));
             setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
         }
-        
+
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value,
-                boolean isSelected, boolean hasFocus, int row, int column) {
+                                                       boolean isSelected, boolean hasFocus, int row, int column) {
             setText((value == null) ? LanguageManager.getInstance().getText("profile.order.details") : value.toString());
             return this;
         }
     }
-    
+
     class ButtonEditor extends AbstractCellEditor implements javax.swing.table.TableCellEditor {
-        private JButton button;
+        private final JButton button;
         private int selectedRow;
-        
+
         public ButtonEditor() {
             button = new JButton();
             button.setOpaque(true);
@@ -167,15 +147,15 @@ public class OrderHistoryFrame extends LanguageAwareFrame {
             button.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
             button.addActionListener(e -> fireEditingStopped());
         }
-        
+
         @Override
         public Component getTableCellEditorComponent(JTable table, Object value,
-                boolean isSelected, int row, int column) {
+                                                     boolean isSelected, int row, int column) {
             selectedRow = row;
             button.setText((value == null) ? LanguageManager.getInstance().getText("profile.order.details") : value.toString());
             return button;
         }
-        
+
         @Override
         public Object getCellEditorValue() {
             SwingUtilities.invokeLater(() -> showOrderDetails(selectedRow));

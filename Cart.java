@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Cart {
+
     private int id;
     private int clientId;
     private List<CartItem> items;
@@ -26,8 +27,7 @@ public class Cart {
 
     public void setId(int id) {
         this.id = id;
-    }
-
+    } 
 
     public int getClientId() {
         return clientId;
@@ -35,8 +35,7 @@ public class Cart {
 
     public void setClientId(int clientId) {
         this.clientId = clientId;
-    }
-
+    } 
 
     public List<CartItem> getItems() {
         return items;
@@ -44,8 +43,7 @@ public class Cart {
 
     public void setItems(List<CartItem> items) {
         this.items = items;
-    }
-
+    } 
 
     public String getCreatedAt() {
         return createdAt;
@@ -97,6 +95,6 @@ public class Cart {
     }
 
     public boolean isEmpty() {
-        return items.isEmpty();
+        return items == null || items.isEmpty();
     }
 }

@@ -1,6 +1,7 @@
 package model;
 
 public class CartItem {
+
     private int id;
     private Product product;
     private int quantity;
@@ -20,8 +21,7 @@ public class CartItem {
 
     public void setId(int id) {
         this.id = id;
-    }
-
+    } 
 
     public Product getProduct() {
         return product;
@@ -29,8 +29,7 @@ public class CartItem {
 
     public void setProduct(Product product) {
         this.product = product;
-    }
-
+    } 
 
     public int getQuantity() {
         return quantity;

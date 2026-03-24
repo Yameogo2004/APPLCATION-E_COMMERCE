@@ -1,9 +1,9 @@
-package e_commerce;
+package model;
 
-import java.util.UUID;
-import java.util.List;
-import java.util.ArrayList;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 public class Order {
 
@@ -12,132 +12,117 @@ public class Order {
     private double totalPrice;
     private String status;
     private LocalDateTime createdAt;
-    private List<OrderItem> items = new ArrayList<>();
+    private List<OrderItem> items;
     private Payment payment;
+
+    public Order() {
+        this.id = 0;
+        this.orderUUID = UUID.randomUUID().toString();
+        this.status = "pending";
+        this.createdAt = LocalDateTime.now();
+        this.totalPrice = 0.0;
+        this.items = new ArrayList<>();
+    }
 
     public Order(int id) {
         this.id = id;
         this.orderUUID = UUID.randomUUID().toString();
         this.status = "pending";
         this.createdAt = LocalDateTime.now();
-        this.totalPrice = 0;
+        this.totalPrice = 0.0;
+        this.items = new ArrayList<>();
     }
-    
-    public Order() {
-        this.orderUUID = UUID.randomUUID().toString();
-        this.status = "pending";
-        this.createdAt = LocalDateTime.now();
-        this.totalPrice = 0;
+
+    public int getId() {
+        return id;
     }
-    
+
+    public void setId(int id) {
+        this.id = id;
+    } 
+
+    public String getOrderUUID() {
+        return orderUUID;
+    }
+
+    public void setOrderUUID(String orderUUID) {
+        this.orderUUID = orderUUID;
+    } 
+
+    public double getTotalPrice() {
+        return totalPrice;
+    }
+
+    public void setTotalPrice(double totalPrice) {
+        this.totalPrice = totalPrice;
+    } 
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    } 
 
     public LocalDateTime getCreatedAt() {
-		return createdAt;
-	}
+        return createdAt;
+    }
 
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    } 
 
+    public List<OrderItem> getItems() {
+        return items;
+    }
 
-
-	public void setCreatedAt(LocalDateTime createdAt) {
-		this.createdAt = createdAt;
-	}
-
-
-
-
-	public void setId(int id) {
-		this.id = id;
-	}
-
-
-
-
-	public void setOrderUUID(String orderUUID) {
-		this.orderUUID = orderUUID;
-	}
-
-
-
-
-	public void setTotalPrice(double totalPrice) {
-		this.totalPrice = totalPrice;
-	}
-
-
-
-
-	public void setStatus(String status) {
-		this.status = status;
-	}
-
-
-
-
-	public void setItems(List<OrderItem> items) {
-		this.items = items;
-	}
-
-
-
-
-	public void setPayment(Payment payment) {
-		this.payment = payment;
-	}
-
-
-
-
-	// ===== Getters =====
-    public int getId() { return id; }
-    public String getOrderUUID() { return orderUUID; }
-    public double getTotalPrice() { return totalPrice; }
-    public String getStatus() { return status; }
-    public List<OrderItem> getItems() { return items; }
-    public Payment getPayment() { return payment; }
-
-    // ===== Ajouter un item et recalculer le total =====
-    public void ajouterItem(OrderItem item) {
-        items.add(item);
+    public void setItems(List<OrderItem> items) {
+        this.items = items != null ? items : new ArrayList<>();
         calculTotal();
     }
 
+    public Payment getPayment() {
+        return payment;
+    }
+
+    public void setPayment(Payment payment) {
+        this.payment = payment;
+    }
+
+    public void ajouterItem(OrderItem item) {
+        if (item != null) {
+            items.add(item);
+            calculTotal();
+        }
+    }
+
     public double calculTotal() {
-        double total = 0;
-        for (OrderItem item : items) {
-            total += item.calculSubtotal();
+        double total = 0.0;
+        if (items != null) {
+            for (OrderItem item : items) {
+                total += item.calculSubtotal();
+            }
         }
         this.totalPrice = total;
         return total;
     }
 
-    // ===== Gestion du statut de la commande =====
     public void validerCommande() {
-        status = "validated";
-        System.out.println("Commande validée.");
+        this.status = "validated";
     }
 
     public void payerCommande(Payment payment) {
         this.payment = payment;
 
-        // Utiliser processPayment() de Payment
-        if (payment.processPayment()) {
-            status = "paid";
-            System.out.println("Paiement réussi !");
+        if (payment != null && payment.processPayment()) {
+            this.status = "paid";
         } else {
-            status = "pending"; // ou "failed" selon ton choix
-            System.out.println("Paiement échoué !");
+            this.status = "pending";
         }
     }
 
     public void cancelOrder() {
-        status = "cancelled";
-        System.out.println("Commande annulée.");
+        this.status = "cancelled";
     }
-
-  
 }
-
-
-
-
-
